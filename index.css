@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #0ea5e9;
+  --primary-dark: #0284c7;
+  --secondary: #6366f1;
+  --accent: #f43f5e;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0ea5e9;
+  --radius: 1.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-slate-50 text-slate-950 font-inter antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+  
+  .premium-card {
+    @apply bg-white rounded-[2rem] border border-slate-200/60 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/5 hover:-translate-y-1;
+  }
+
+  .premium-table {
+    @apply w-full text-left border-separate border-spacing-0;
+  }
+
+  .premium-table th {
+    @apply bg-slate-50/50 py-4 px-6 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 border-b border-slate-100;
+  }
+
+  .premium-table td {
+    @apply py-5 px-6 text-sm font-medium text-slate-600 border-b border-slate-50 transition-colors;
+  }
+
+  .premium-table tr:hover td {
+    @apply bg-slate-50/50;
+  }
+
+  .btn-primary {
+    @apply bg-sky-500 hover:bg-sky-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-sky-500/20 active:scale-95;
+  }
+
+  .badge {
+    @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider;
+  }
+
+  .badge-blue {
+    @apply bg-sky-50 text-sky-600 border border-sky-100;
+  }
+
+  .badge-green {
+    @apply bg-emerald-50 text-emerald-600 border border-emerald-100;
+  }
+
+  .badge-red {
+    @apply bg-rose-50 text-rose-600 border border-rose-100;
+  }
+
+  .badge-orange {
+    @apply bg-amber-50 text-amber-600 border border-amber-100;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}

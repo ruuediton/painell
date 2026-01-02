@@ -1,20 +1,89 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 💎 deeBank Premium Admin Dashboard
 
-# Run and deploy your AI Studio app
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-latest-purple.svg)](https://vitejs.dev/)
+[![Tailwind](https://img.shields.io/badge/Tailwind-3.x-sky.svg)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-This contains everything you need to run your app locally.
+Um dashboard administrativo de alto nível, desenvolvido para o ecossistema **deeBank**, com foco em gestão financeira, auditoria de transações (exclusivo para Angola +244) e monitoramento de usuários em tempo real.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1SrfMpfhzv6vnrFuR08bSR1Fz0W7tRXXL
+---
 
-## Run Locally
+## ✨ Características Principais
 
-**Prerequisites:**  Node.js
+- 🚀 **Design Premium**: Interface moderna com glassmorphism, tons de azul profundos e animações fluidas.
+- 📊 **Analytics Avançado**: Gráficos interativos com Recharts para monitoramento de crescimento e fluxo de caixa.
+- 🛡️ **Segurança**: Porta de autenticação com suporte a **2FA (Two-Factor Authentication)**.
+- 💰 **Gestão Financeira**: Módulo especializado para aprovação/rejeição de depósitos e saques.
+- 📱 **Responsivo**: Layout adaptável para Desktop (Sidebar) e Mobile (Bottom Navigation).
+- 📜 **Logs de Auditoria**: Registro detalhado de todas as ações administrativas para máxima transparência.
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🛠️ Tecnologias Utilizadas
+
+- **Core**: React 19 + TypeScript
+- **Styling**: Tailwind CSS + Custom Design System
+- **Charts**: Recharts
+- **Icons**: Lucide Icons (SVG implementation)
+- **Deployment**: Vite (Build System)
+
+---
+
+## 🚀 Como Iniciar
+
+### Pré-requisitos
+- Node.js (v18 ou superior)
+- npm ou yarn
+
+### Instalação
+
+1. **Clone o repositório**:
+   ```bash
+   git clone https://github.com/seu-usuario/paineldeebank.git
+   cd paineldeebank/painell
+   ```
+
+2. **Instale as dependências**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure as variáveis de ambiente**:
+   Crie um arquivo `.env` baseado no `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Inicie o servidor de desenvolvimento**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 📸 Screenshots
+
+*(Adicione imagens aqui para impressionar no GitHub)*
+
+---
+
+## 🏗️ Estrutura do Projeto
+
+- `/components`: Componentes reutilizáveis (Sidebar, StatCard, etc.)
+- `/pages`: Páginas da aplicação (Dashboard, Users, Transactions, Logs)
+- `/services`: Serviços de dados e integração com Supabase
+- `/types`: Definições globais de TypeScript
+- `index.css`: Sistema de design e variáveis globais
+
+---
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+---
+
+<p align="center">
+  Desenvolvido com ❤️ por <strong>deeBank Team</strong>
+</p>
