@@ -17,6 +17,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
     totalUsers: 0,
     withdrawalsToday: 0,
     totalDeposits: 0,
+    totalVipUsers: 0,
     loading: true
   });
 
@@ -54,10 +55,19 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
 
       const totalDepositsVolume = deposits?.reduce((sum, d) => sum + Number(d.valor_deposito), 0) || 0;
 
+      // 4. VIP Users (Amount Paid >= 9000)
+      const { data: vipPurchases } = await supabase
+        .from('user_purchases')
+        .select('user_id')
+        .gte('amount_paid', 9000);
+
+      const uniqueVips = new Set(vipPurchases?.map(p => p.user_id)).size;
+
       setStats({
         totalUsers: usersCount || 0,
         withdrawalsToday: totalWithdrawals,
         totalDeposits: totalDepositsVolume,
+        totalVipUsers: uniqueVips,
         loading: false
       });
 
@@ -101,12 +111,19 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatCard
           title="Total de Usuários"
           value={stats.loading ? '...' : stats.totalUsers}
           icon={<Icons.Users />}
           trend={{ value: 'Real-time', positive: true }}
+          onClick={() => setCurrentPage('users')}
+        />
+        <StatCard
+          title="Usuários VIP"
+          value={stats.loading ? '...' : stats.totalVipUsers}
+          icon={<Icons.Bonus />}
+          trend={{ value: 'Active', positive: true }}
           onClick={() => setCurrentPage('users')}
         />
         <StatCard
