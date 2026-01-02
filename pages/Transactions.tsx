@@ -22,6 +22,9 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'aprovado' | 'rejeitado' | 'pendente'>('all');
+  const [searchStatus, setSearchStatus] = useState<'pendente' | 'aprovado' | 'rejeitado'>('pendente');
+  const [searchDate, setSearchDate] = useState('');
 
   // Validação para Angola: 9 dígitos começando com 9
   const isValidPhone = /^9\d{8}$/.test(phone);
@@ -29,19 +32,47 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
 
   useEffect(() => {
     fetchRecentTransactions();
-  }, [type]);
+  }, [type, historyFilter]);
 
   const fetchRecentTransactions = async () => {
     try {
+      let query;
+
       if (type === 'DEPOSIT') {
-        const { data } = await supabase
+        query = supabase
           .from('depositos_clientes')
           .select('*, profiles(full_name, phone)')
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(20);
 
-        if (data) {
-          const mapped: Transaction[] = data.map(d => ({
+        if (historyFilter !== 'all') {
+          if (historyFilter === 'aprovado') {
+            query = query.in('estado_de_pagamento', ['aprovado', 'recarregado', 'concluido']);
+          } else {
+            query = query.eq('estado_de_pagamento', historyFilter);
+          }
+        }
+      } else {
+        query = supabase
+          .from('retirada_clientes')
+          .select('*')
+          .order('data_de_criacao', { ascending: false })
+          .limit(20);
+
+        if (historyFilter !== 'all') {
+          if (historyFilter === 'aprovado') {
+            query = query.in('estado_da_retirada', ['aprovado', 'concluido']);
+          } else {
+            query = query.eq('estado_da_retirada', historyFilter);
+          }
+        }
+      }
+
+      const { data } = await query;
+
+      if (data) {
+        if (type === 'DEPOSIT') {
+          const mapped: Transaction[] = data.map((d: any) => ({
             id: d.id,
             userId: d.user_id,
             userName: d.profiles?.full_name || 'Desconhecido',
@@ -52,16 +83,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             type: 'DEPOSIT'
           }));
           setRecentTransactions(mapped);
-        }
-      } else {
-        const { data } = await supabase
-          .from('retirada_clientes')
-          .select('*')
-          .order('data_de_criacao', { ascending: false })
-          .limit(10);
-
-        if (data) {
-          const mapped: Transaction[] = data.map(d => ({
+        } else {
+          const mapped: Transaction[] = data.map((d: any) => ({
             id: d.id,
             userId: d.user_id,
             userName: d.nome_completo || 'Desconhecido',
@@ -97,13 +120,24 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         const { data: userData } = await supabase.from('profiles').select('id, full_name').eq('phone', phone).single();
 
         if (userData) {
-          const { data: txData } = await supabase
+          let query = supabase
             .from('depositos_clientes')
             .select('*')
-            .eq('user_id', userData.id)
-            .eq('estado_de_pagamento', 'pendente')
-            .limit(1)
-            .single();
+            .eq('user_id', userData.id);
+
+          // Status Filter
+          if (searchStatus === 'aprovado') {
+            query = query.in('estado_de_pagamento', ['aprovado', 'recarregado', 'concluido']);
+          } else {
+            query = query.eq('estado_de_pagamento', searchStatus);
+          }
+
+          // Date Filter
+          if (searchDate) {
+            query = query.gte('created_at', `${searchDate}T00:00:00`).lte('created_at', `${searchDate}T23:59:59`);
+          }
+
+          const { data: txData } = await query.order('created_at', { ascending: false }).limit(1).single();
 
           if (txData) {
             setPendingTx({
@@ -112,7 +146,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
               userName: userData.full_name,
               userPhone: phone,
               amount: Number(txData.valor_deposito),
-              status: TransactionStatus.PENDING,
+              status: mapStatus(txData.estado_de_pagamento),
               date: txData.created_at,
               type: 'DEPOSIT'
             });
@@ -120,13 +154,24 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         }
       } else {
         // WITHDRAWAL
-        const { data: txData } = await supabase
+        let query = supabase
           .from('retirada_clientes')
           .select('*')
-          .eq('telefone_do_usuario', phone)
-          .eq('estado_da_retirada', 'pendente')
-          .limit(1)
-          .single();
+          .eq('telefone_do_usuario', phone);
+
+        // Status Filter
+        if (searchStatus === 'aprovado') {
+          query = query.in('estado_da_retirada', ['aprovado', 'concluido']);
+        } else {
+          query = query.eq('estado_da_retirada', searchStatus);
+        }
+
+        // Date Filter
+        if (searchDate) {
+          query = query.gte('data_de_criacao', `${searchDate}T00:00:00`).lte('data_de_criacao', `${searchDate}T23:59:59`);
+        }
+
+        const { data: txData } = await query.order('data_de_criacao', { ascending: false }).limit(1).single();
 
         if (txData) {
           const amount = Number(txData.valor_solicitado);
@@ -136,7 +181,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             userName: txData.nome_completo,
             userPhone: phone,
             amount: amount,
-            status: TransactionStatus.PENDING,
+            status: mapStatus(txData.estado_da_retirada),
             date: txData.data_de_criacao,
             type: 'WITHDRAWAL',
             bankName: txData.nome_do_banco,
@@ -158,18 +203,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
     try {
       // Map UI Status to DB Status Strings (lowercase)
       let dbStatus = 'pendente';
-      if (selectedStatus === 'aprovado') dbStatus = 'aprovado'; // or 'recarregado'/'concluido' depending on table preference, user asked for 'aprovado' pattern but usually table has specific constraints.
-      // Based on previous context: 'retirada_clientes' uses 'concluido' usually? User said "aprovado", "rejeitado", "pendente" are the patterns.
-      // I will adhere to the user's requested strings but might fallback if DB constrained.
-      // Let's use 'aprovado' for generic success if that's what they want, but historically withdrawals used 'concluido'.
-      // I'll stick to 'aprovado' for deposits and 'aprovado' for withdrawals if the DB allows text. 
-      // Actually, standardizing on user request:
-      if (selectedStatus === 'aprovado') {
-        dbStatus = type === 'DEPOSIT' ? 'aprovado' : 'aprovado';
-        // Note: If DB enum constraint exists, this might fail. We'll try user request.
-      } else if (selectedStatus === 'rejeitado') {
-        dbStatus = 'rejeitado';
-      }
+      if (selectedStatus === 'aprovado') dbStatus = 'aprovado';
+      else if (selectedStatus === 'rejeitado') dbStatus = 'rejeitado';
 
       const table = type === 'DEPOSIT' ? 'depositos_clientes' : 'retirada_clientes';
       const statusCol = type === 'DEPOSIT' ? 'estado_de_pagamento' : 'estado_da_retirada';
@@ -222,35 +257,65 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         {/* Left Panel: Search & Action */}
         <div className="lg:col-span-5 space-y-6">
           <div className="premium-card p-8 space-y-8 bg-slate-900 text-white border-none shadow-2xl shadow-slate-200">
-            <div className="space-y-2">
+            <div className="space-y-4">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
-                Buscar Transação Pendente
+                Buscar Transação
               </label>
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">+244</span>
-                  <input
-                    type="text"
-                    maxLength={9}
-                    placeholder="9xx xxx xxx"
-                    className={`w-full pl-14 pr-4 py-4 bg-slate-800 border-2 rounded-2xl focus:ring-4 focus:ring-sky-500/20 outline-none transition-all font-mono font-bold text-lg ${phoneError ? 'border-rose-500 text-rose-500' : 'border-slate-700 text-white focus:border-sky-500'}`}
-                    value={phone}
+              <div className="flex-1 relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">+244</span>
+                <input
+                  type="text"
+                  maxLength={9}
+                  placeholder="9xx xxx xxx"
+                  className={`w-full pl-14 pr-4 py-4 bg-slate-800 border-2 rounded-2xl focus:ring-4 focus:ring-sky-500/20 outline-none transition-all font-mono font-bold text-lg ${phoneError ? 'border-rose-500 text-rose-500' : 'border-slate-700 text-white focus:border-sky-500'}`}
+                  value={phone}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setPhone(val);
+                    if (hasSearched) setHasSearched(false);
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <select
+                    value={searchStatus}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      setPhone(val);
+                      setSearchStatus(e.target.value as any);
                       if (hasSearched) setHasSearched(false);
                     }}
+                    className="w-full h-[56px] px-4 bg-slate-800 border-2 border-slate-700 rounded-2xl text-white font-bold text-xs uppercase focus:border-sky-500 outline-none appearance-none"
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="aprovado">Aprovado</option>
+                    <option value="rejeitado">Rejeitado</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="date"
+                    value={searchDate}
+                    onChange={(e) => {
+                      setSearchDate(e.target.value);
+                      if (hasSearched) setHasSearched(false);
+                    }}
+                    className="w-full h-[56px] px-4 bg-slate-800 border-2 border-slate-700 rounded-2xl text-white font-bold text-xs uppercase focus:border-sky-500 outline-none"
                   />
                 </div>
-                <button
-                  onClick={handleSearch}
-                  disabled={!isValidPhone || loading}
-                  className={`px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${isValidPhone ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/20' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
-                >
-                  <Icons.Search />
-                </button>
               </div>
             </div>
+
+            <button
+              onClick={handleSearch}
+              disabled={!isValidPhone || loading}
+              className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${isValidPhone ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/20' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <Icons.Search />
+                <span>Localizar</span>
+              </div>
+            </button>
 
             {hasSearched && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-300">
@@ -305,11 +370,14 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                     <div className="pt-2 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                       <span>ID: {pendingTx.id.substring(0, 8)}</span>
                       <span>DATA: {new Date(pendingTx.date).toLocaleDateString('pt-BR')}</span>
+                      <span className={`badge ${pendingTx.status === TransactionStatus.RECHARGED ? 'badge-green' : pendingTx.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
+                        {pendingTx.status}
+                      </span>
                     </div>
                   </div>
                 ) : (
                   <div className="bg-sky-500/10 border border-sky-500/20 p-6 rounded-3xl text-center">
-                    <p className="text-sky-400 font-black text-[10px] uppercase tracking-widest">Nenhuma transação pendente</p>
+                    <p className="text-sky-400 font-black text-[10px] uppercase tracking-widest">Nenhuma transação encontrada</p>
                   </div>
                 )}
               </div>
@@ -339,7 +407,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                   : 'bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/5 active:scale-95'
                 }`}
             >
-              Confirmar Transação
+              Atualizar Transação
             </button>
           </div>
         </div>
@@ -347,9 +415,19 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         {/* Right Panel: History */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden h-full">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+            <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
               <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">Histórico Recente</h3>
-              <button onClick={fetchRecentTransactions} className="text-[10px] font-black text-sky-500 uppercase tracking-widest hover:underline">Atualizar</button>
+              <div className="flex bg-slate-100 p-1 rounded-xl">
+                {(['all', 'aprovado', 'rejeitado', 'pendente'] as const).map(filter => (
+                  <button
+                    key={filter}
+                    onClick={() => setHistoryFilter(filter)}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${historyFilter === filter ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    {filter === 'all' ? 'Todos' : filter}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="premium-table">
