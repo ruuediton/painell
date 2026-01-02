@@ -23,7 +23,7 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
       .select('*');
 
     if (searchTerm) {
-      query = query.or(`full_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      query = query.or(`phone.ilike.%${searchTerm}%,id.eq.${searchTerm}`);
     }
 
     const { data, error } = await query.limit(50);
@@ -37,11 +37,11 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
         phone: u.phone || 'Sem Telefone',
         inviteCode: u.invite_code || '',
         balance: Number(u.balance) || 0,
-        totalBalance: Number(u.balance) || 0, // Fallback
+        totalBalance: Number(u.balance) || 0,
         status: (u.state === 'bloqueado' ? UserStatus.BLOCKED : UserStatus.ACTIVE),
         totalInvested: 0,
         totalWithdrawn: 0,
-        totalDeposited: 0,
+        totalDeposited: Number(u.reloaded_amount) || 0, // Using reloaded_amount as Total Deposito
         dailyIncome: 0,
         createdAt: u.created_at,
         canWithdraw: u.state !== 'bloqueado',
@@ -69,7 +69,7 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
           </span>
           <input
             type="text"
-            placeholder="Buscar por nome ou telefone..."
+            placeholder="Buscar por telefone ou ID..."
             className="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none transition-all font-medium text-slate-600 placeholder:text-slate-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -82,16 +82,17 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
           <table className="premium-table">
             <thead>
               <tr>
-                <th>Usuário</th>
+                <th>ID</th>
                 <th>Telefone</th>
-                <th>Saldo</th>
+                <th>Saldo (Kz)</th>
+                <th>Total Depósito</th>
                 <th>Estado</th>
                 <th className="text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="p-20 text-center text-slate-400">Carregando usuários...</td></tr>
+                <tr><td colSpan={6} className="p-20 text-center text-slate-400">Carregando usuários...</td></tr>
               ) : users.map((user) => (
                 <tr
                   key={user.id}
@@ -99,21 +100,18 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
                   onClick={() => onSelectUser(user)}
                 >
                   <td>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 font-black text-xs border border-sky-100 group-hover:bg-sky-500 group-hover:text-white transition-all">
-                        {user.name.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-black text-slate-900 group-hover:text-sky-600 transition-colors tracking-tight">{user.name}</p>
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-0.5">ID: {user.id.substring(0, 8)}</p>
-                      </div>
-                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg">
+                      {user.id.substring(0, 8)}...
+                    </span>
                   </td>
                   <td>
-                    <span className="font-bold text-slate-600">{user.phone}</span>
+                    <span className="font-black text-slate-700 text-sm">{user.phone}</span>
                   </td>
                   <td>
                     <span className="font-black text-emerald-600">Kz {user.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </td>
+                  <td>
+                    <span className="font-bold text-slate-600">Kz {user.totalDeposited.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </td>
                   <td>
                     <span className={`badge ${user.status === UserStatus.ACTIVE ? 'badge-green' : 'badge-red'}`}>
