@@ -47,6 +47,9 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
     setPhone('');
     setPendingTx(null);
     setHasSearched(false);
+    setSelectedStatus('');
+    setSearchDate('');
+    setRecentTransactions([]);
   }, [type]);
 
   const fetchRecentTransactions = async () => {
@@ -151,7 +154,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
               amount: Number(txData.valor_deposito),
               status: mapStatus(txData.estado_de_pagamento),
               date: txData.created_at,
-              type: 'DEPOSIT'
+              type: 'DEPOSIT',
+              bankName: txData.nome_do_banco
             });
           }
         }
@@ -318,59 +322,89 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
               <div className="animate-in fade-in slide-in-from-top-4 duration-300">
                 {pendingTx ? (
                   <div className="bg-slate-800/50 rounded-3xl border border-slate-700 p-6 space-y-5">
-                    <div className="flex justify-between items-start border-b border-slate-700/50 pb-4">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Titular da Conta</p>
-                        <p className="text-lg font-black">{pendingTx.userName}</p>
-                        <p className="text-xs text-slate-400 font-mono">{pendingTx.userPhone}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Valor Solicitado</p>
-                        <p className="text-xl font-black text-white">Kz {pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      </div>
-                    </div>
-
-                    {type === 'WITHDRAWAL' && (
+                    {type === 'DEPOSIT' ? (
                       <>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
-                            <div className="flex justify-between items-center">
-                              <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Valor Final (90%)</p>
-                              <button onClick={() => copyToClipboard(pendingTx.netValue?.toString() || '')} className="text-slate-400 hover:text-white"><Icons.Dashboard /></button>
-                            </div>
-                            <p className="text-lg font-black text-white">
-                              Kz {pendingTx.netValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
+                        <div className="flex justify-between items-start border-b border-slate-700/50 pb-4">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Valor Solicitado</p>
+                            <p className="text-xl font-black text-white">Kz {pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                           </div>
-                          <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Banco</p>
-                            <p className="text-sm font-bold text-white truncate" title={pendingTx.bankName}>
+                          <div className="text-right space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Banco</p>
+                            <p className="text-sm font-bold text-white max-w-[150px] truncate" title={pendingTx.bankName}>
                               {pendingTx.bankName || 'N/A'}
                             </p>
                           </div>
                         </div>
-
-                        <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
-                          <div className="flex justify-between items-center">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">IBAN</p>
-                            <button onClick={() => copyToClipboard(pendingTx.iban || '')} className="text-slate-400 hover:text-sky-400" title="Copiar IBAN">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                            </button>
+                        <div className="pt-2 flex flex-col gap-2">
+                          <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            <span>DATA: {new Date(pendingTx.date).toLocaleString('pt-BR')}</span>
+                            <span>ID: {pendingTx.id.substring(0, 8)}</span>
                           </div>
-                          <p className="text-xs font-mono font-bold text-sky-200 break-all">
-                            {pendingTx.iban || 'Não informado'}
-                          </p>
+                          <div className="flex justify-end">
+                            <span className={`badge ${pendingTx.status === TransactionStatus.RECHARGED ? 'badge-green' : pendingTx.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
+                              {pendingTx.status === TransactionStatus.RECHARGED ? successLabel : pendingTx.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-start border-b border-slate-700/50 pb-4">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Titular da Conta</p>
+                            <p className="text-lg font-black">{pendingTx.userName}</p>
+                            <p className="text-xs text-slate-400 font-mono">{pendingTx.userPhone}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Valor Solicitado</p>
+                            <p className="text-xl font-black text-white">Kz {pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          </div>
+                        </div>
+
+                        {type === 'WITHDRAWAL' && (
+                          <>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
+                                <div className="flex justify-between items-center">
+                                  <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Valor Final (90%)</p>
+                                  <button onClick={() => copyToClipboard(pendingTx.netValue?.toString() || '')} className="text-slate-400 hover:text-white"><Icons.Dashboard /></button>
+                                </div>
+                                <p className="text-lg font-black text-white">
+                                  Kz {pendingTx.netValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </p>
+                              </div>
+                              <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Banco</p>
+                                <p className="text-sm font-bold text-white truncate" title={pendingTx.bankName}>
+                                  {pendingTx.bankName || 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
+                              <div className="flex justify-between items-center">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">IBAN</p>
+                                <button onClick={() => copyToClipboard(pendingTx.iban || '')} className="text-slate-400 hover:text-sky-400" title="Copiar IBAN">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                </button>
+                              </div>
+                              <p className="text-xs font-mono font-bold text-sky-200 break-all">
+                                {pendingTx.iban || 'Não informado'}
+                              </p>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="pt-2 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          <span>ID: {pendingTx.id.substring(0, 8)}</span>
+                          <span>DATA: {new Date(pendingTx.date).toLocaleDateString('pt-BR')}</span>
+                          <span className={`badge ${pendingTx.status === TransactionStatus.RECHARGED ? 'badge-green' : pendingTx.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
+                            {pendingTx.status}
+                          </span>
                         </div>
                       </>
                     )}
-
-                    <div className="pt-2 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                      <span>ID: {pendingTx.id.substring(0, 8)}</span>
-                      <span>DATA: {new Date(pendingTx.date).toLocaleDateString('pt-BR')}</span>
-                      <span className={`badge ${pendingTx.status === TransactionStatus.RECHARGED ? 'badge-green' : pendingTx.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
-                        {pendingTx.status}
-                      </span>
-                    </div>
                   </div>
                 ) : (
                   <div className="bg-sky-500/10 border border-sky-500/20 p-6 rounded-3xl text-center">
