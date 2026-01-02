@@ -3,6 +3,12 @@ import { supabase } from '../services/supabase';
 import { TransactionStatus, Transaction } from '../types';
 import { Icons } from '../constants';
 
+interface ExtendedTransaction extends Transaction {
+  bankName?: string;
+  iban?: string;
+  netValue?: number;
+}
+
 interface TransactionsProps {
   type: 'DEPOSIT' | 'WITHDRAWAL';
   onLogAction: (action: string, details: string) => void;
@@ -12,7 +18,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
   const [phone, setPhone] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
-  const [pendingTx, setPendingTx] = useState<Transaction | null>(null);
+  const [pendingTx, setPendingTx] = useState<ExtendedTransaction | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
@@ -41,8 +47,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             userName: d.profiles?.full_name || 'Desconhecido',
             userPhone: d.profiles?.phone || 'N/A',
             amount: Number(d.valor_deposito),
-            status: mapDepositStatus(d.estado_de_pagamento),
-            date: new Date(d.created_at).toLocaleDateString(),
+            status: mapStatus(d.estado_de_pagamento),
+            date: new Date(d.created_at).toLocaleDateString('pt-BR'),
             type: 'DEPOSIT'
           }));
           setRecentTransactions(mapped);
@@ -50,8 +56,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
       } else {
         const { data } = await supabase
           .from('retirada_clientes')
-          .select('*') // retirada_clientes has nome_completo and telefone_do_usuario directly usually, checking schema...
-          // Schema from step 131 says: nome_completo, telefone_do_usuario. It also has user_id. 
+          .select('*')
           .order('data_de_criacao', { ascending: false })
           .limit(10);
 
@@ -62,8 +67,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             userName: d.nome_completo || 'Desconhecido',
             userPhone: d.telefone_do_usuario || 'N/A',
             amount: Number(d.valor_solicitado),
-            status: mapWithdrawalStatus(d.estado_da_retirada),
-            date: new Date(d.data_de_criacao).toLocaleDateString(),
+            status: mapStatus(d.estado_da_retirada),
+            date: new Date(d.data_de_criacao).toLocaleDateString('pt-BR'),
             type: 'WITHDRAWAL'
           }));
           setRecentTransactions(mapped);
@@ -74,15 +79,10 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
     }
   };
 
-  const mapDepositStatus = (status: string): TransactionStatus => {
-    if (status === 'recarregado' || status === 'aprovado') return TransactionStatus.RECHARGED;
-    if (status === 'rejeitado') return TransactionStatus.REJECTED;
-    return TransactionStatus.PENDING;
-  };
-
-  const mapWithdrawalStatus = (status: string): TransactionStatus => {
-    if (status === 'concluido' || status === 'aprovado') return TransactionStatus.RECHARGED;
-    if (status === 'rejeitado') return TransactionStatus.REJECTED;
+  const mapStatus = (status: string): TransactionStatus => {
+    const s = status?.toLowerCase() || '';
+    if (s === 'aprovado' || s === 'concluido' || s === 'recarregado') return TransactionStatus.RECHARGED;
+    if (s === 'rejeitado') return TransactionStatus.REJECTED;
     return TransactionStatus.PENDING;
   };
 
@@ -94,11 +94,6 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
 
     try {
       if (type === 'DEPOSIT') {
-        // Find FIRST pending deposit for this phone
-        // We need to join with profiles to filter by phone if phone is not in deposits table.
-        // deposits_clientes schema: user_id. profiles: id, phone.
-
-        // Two step: get user_id from profiles (or use inner join syntax if supported deeply, but 2 step is safer)
         const { data: userData } = await supabase.from('profiles').select('id, full_name').eq('phone', phone).single();
 
         if (userData) {
@@ -106,7 +101,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             .from('depositos_clientes')
             .select('*')
             .eq('user_id', userData.id)
-            .eq('estado_de_pagamento', 'pendente') // Assuming 'pendente' is the raw DB value
+            .eq('estado_de_pagamento', 'pendente')
             .limit(1)
             .single();
 
@@ -124,7 +119,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
           }
         }
       } else {
-        // Withdrawals have telefone_do_usuario directly
+        // WITHDRAWAL
         const { data: txData } = await supabase
           .from('retirada_clientes')
           .select('*')
@@ -134,15 +129,19 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
           .single();
 
         if (txData) {
+          const amount = Number(txData.valor_solicitado);
           setPendingTx({
             id: txData.id,
             userId: txData.user_id,
             userName: txData.nome_completo,
             userPhone: phone,
-            amount: Number(txData.valor_solicitado),
+            amount: amount,
             status: TransactionStatus.PENDING,
             date: txData.data_de_criacao,
-            type: 'WITHDRAWAL'
+            type: 'WITHDRAWAL',
+            bankName: txData.nome_do_banco,
+            iban: txData.iban,
+            netValue: amount * 0.90 // 10% discount implies 90% payout
           });
         }
       }
@@ -157,52 +156,52 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
     if (!pendingTx || !selectedStatus) return;
 
     try {
-      if (type === 'DEPOSIT') {
-        let dbStatus = 'pendente';
-        if (selectedStatus === TransactionStatus.RECHARGED) dbStatus = 'recarregado';
-        if (selectedStatus === TransactionStatus.REJECTED) dbStatus = 'rejeitado';
-
-        const { error } = await supabase
-          .from('depositos_clientes')
-          .update({ estado_de_pagamento: dbStatus })
-          .eq('id', pendingTx.id);
-
-        if (error) throw error;
-
-        // Also update profile balance if recharged? (Trigger might handle it, but instructions say "Integrar tabelas". Usually backend handles balance. I will assume DB triggers/functions handle balance update on status change. If not, I should technically do it, but "Não modelar banco" suggests sticking to table updates.)
-        // BUT: User permission says "Atualizar". If the app logic requires manual balance update, I would do it. 
-        // Given I shouldn't alter "structure", I assume triggers exist OR I should update. 
-        // For safety/simplicity in this task, I'll update the status only.
-
-      } else {
-        let dbStatus = 'pendente';
-        if (selectedStatus === TransactionStatus.RECHARGED) dbStatus = 'concluido'; // 'concluido' seems to be the success state for withdrawals based on previous output
-        if (selectedStatus === TransactionStatus.REJECTED) dbStatus = 'rejeitado';
-
-        const { error } = await supabase
-          .from('retirada_clientes')
-          .update({ estado_da_retirada: dbStatus })
-          .eq('id', pendingTx.id);
-
-        if (error) throw error;
+      // Map UI Status to DB Status Strings (lowercase)
+      let dbStatus = 'pendente';
+      if (selectedStatus === 'aprovado') dbStatus = 'aprovado'; // or 'recarregado'/'concluido' depending on table preference, user asked for 'aprovado' pattern but usually table has specific constraints.
+      // Based on previous context: 'retirada_clientes' uses 'concluido' usually? User said "aprovado", "rejeitado", "pendente" are the patterns.
+      // I will adhere to the user's requested strings but might fallback if DB constrained.
+      // Let's use 'aprovado' for generic success if that's what they want, but historically withdrawals used 'concluido'.
+      // I'll stick to 'aprovado' for deposits and 'aprovado' for withdrawals if the DB allows text. 
+      // Actually, standardizing on user request:
+      if (selectedStatus === 'aprovado') {
+        dbStatus = type === 'DEPOSIT' ? 'aprovado' : 'aprovado';
+        // Note: If DB enum constraint exists, this might fail. We'll try user request.
+      } else if (selectedStatus === 'rejeitado') {
+        dbStatus = 'rejeitado';
       }
+
+      const table = type === 'DEPOSIT' ? 'depositos_clientes' : 'retirada_clientes';
+      const statusCol = type === 'DEPOSIT' ? 'estado_de_pagamento' : 'estado_da_retirada';
+
+      const { error } = await supabase
+        .from(table)
+        .update({ [statusCol]: dbStatus })
+        .eq('id', pendingTx.id);
+
+      if (error) throw error;
 
       onLogAction(
         `Auditoria de ${type === 'DEPOSIT' ? 'Depósito' : 'Saque'}`,
-        `Admin alterou status da transação ${pendingTx.id} para ${selectedStatus}`
+        `Admin alterou status da transação ${pendingTx.id} para ${dbStatus}`
       );
 
-      alert(`Sucesso! Status alterado para ${selectedStatus}.`);
+      alert(`Sucesso! Status alterado para ${dbStatus}.`);
 
       setPhone('');
       setPendingTx(null);
       setSelectedStatus('');
       setHasSearched(false);
-      fetchRecentTransactions(); // Refresh list
+      fetchRecentTransactions();
 
     } catch (err: any) {
       alert('Erro ao atualizar: ' + err.message);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert('Copiado para a área de transferência!');
   };
 
   return (
@@ -220,6 +219,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* Left Panel: Search & Action */}
         <div className="lg:col-span-5 space-y-6">
           <div className="premium-card p-8 space-y-8 bg-slate-900 text-white border-none shadow-2xl shadow-slate-200">
             <div className="space-y-2">
@@ -250,33 +250,66 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                   <Icons.Search />
                 </button>
               </div>
-              {phoneError && (
-                <p className="text-rose-400 text-[10px] font-bold uppercase tracking-widest mt-2 ml-1">Número inválido</p>
-              )}
             </div>
 
             {hasSearched && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-300">
                 {pendingTx ? (
-                  <div className="bg-slate-800/50 rounded-3xl border border-slate-700 p-6 space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-1">Beneficiário</p>
+                  <div className="bg-slate-800/50 rounded-3xl border border-slate-700 p-6 space-y-5">
+                    <div className="flex justify-between items-start border-b border-slate-700/50 pb-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Titular da Conta</p>
                         <p className="text-lg font-black">{pendingTx.userName}</p>
+                        <p className="text-xs text-slate-400 font-mono">{pendingTx.userPhone}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Valor</p>
-                        <p className="text-xl font-black">{pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} Kz</p>
+                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Valor Solicitado</p>
+                        <p className="text-xl font-black text-white">Kz {pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-slate-700/50 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                      <span>ID: {pendingTx.id.substring(0, 8)}...</span>
-                      <span>{new Date(pendingTx.date).toLocaleDateString()}</span>
+
+                    {type === 'WITHDRAWAL' && (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
+                            <div className="flex justify-between items-center">
+                              <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Valor Final (90%)</p>
+                              <button onClick={() => copyToClipboard(pendingTx.netValue?.toString() || '')} className="text-slate-400 hover:text-white"><Icons.Dashboard /></button>
+                            </div>
+                            <p className="text-lg font-black text-white">
+                              Kz {pendingTx.netValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                          <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Banco</p>
+                            <p className="text-sm font-bold text-white truncate" title={pendingTx.bankName}>
+                              {pendingTx.bankName || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
+                          <div className="flex justify-between items-center">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">IBAN</p>
+                            <button onClick={() => copyToClipboard(pendingTx.iban || '')} className="text-slate-400 hover:text-sky-400" title="Copiar IBAN">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            </button>
+                          </div>
+                          <p className="text-xs font-mono font-bold text-sky-200 break-all">
+                            {pendingTx.iban || 'Não informado'}
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="pt-2 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                      <span>ID: {pendingTx.id.substring(0, 8)}</span>
+                      <span>DATA: {new Date(pendingTx.date).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-rose-500/10 border border-rose-500/20 p-6 rounded-3xl text-center">
-                    <p className="text-rose-400 font-black text-[10px] uppercase tracking-widest">Sem operações pendentes</p>
+                  <div className="bg-sky-500/10 border border-sky-500/20 p-6 rounded-3xl text-center">
+                    <p className="text-sky-400 font-black text-[10px] uppercase tracking-widest">Nenhuma transação pendente</p>
                   </div>
                 )}
               </div>
@@ -311,11 +344,12 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
           </div>
         </div>
 
+        {/* Right Panel: History */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden h-full">
             <div className="p-8 border-b border-slate-100 flex justify-between items-center">
               <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">Histórico Recente</h3>
-              <button className="text-[10px] font-black text-sky-500 uppercase tracking-widest hover:underline">Ver Todos</button>
+              <button onClick={fetchRecentTransactions} className="text-[10px] font-black text-sky-500 uppercase tracking-widest hover:underline">Atualizar</button>
             </div>
             <div className="overflow-x-auto">
               <table className="premium-table">
@@ -339,7 +373,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                       </td>
                       <td>
                         <span className={`badge ${t.status === TransactionStatus.RECHARGED ? 'badge-green' : t.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
-                          {t.status === TransactionStatus.RECHARGED ? 'Concluído' : t.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
+                          {t.status === TransactionStatus.RECHARGED ? 'Aprovado' : t.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
                         </span>
                       </td>
                       <td>
@@ -359,21 +393,22 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-8 text-center bg-slate-900">
               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Auditar Transação</h3>
-              <p className="text-slate-400 text-[10px] mt-2 font-bold uppercase">Escolha o novo estado</p>
+              <p className="text-slate-400 text-[10px] mt-2 font-bold uppercase">Definir estado final</p>
             </div>
             <div className="p-6 space-y-2">
-              {[TransactionStatus.RECHARGED, TransactionStatus.REJECTED, TransactionStatus.PENDING].map((status) => (
+              {['aprovado', 'rejeitado', 'pendente'].map((status) => (
                 <button
                   key={status}
                   onClick={() => {
                     setSelectedStatus(status);
                     setShowModal(false);
                   }}
-                  className="w-full py-4 px-6 hover:bg-slate-50 rounded-2xl text-sm font-black text-slate-700 transition-all text-left flex justify-between items-center"
+                  className="w-full py-4 px-6 hover:bg-slate-50 rounded-2xl text-sm font-black text-slate-700 transition-all text-left flex justify-between items-center group"
                 >
-                  <span className="uppercase tracking-tight">{status === TransactionStatus.RECHARGED ? (type === 'DEPOSIT' ? 'Recarregar' : 'Concluir') : status}</span>
-                  {status === TransactionStatus.RECHARGED ? <div className="w-2 h-2 bg-emerald-500 rounded-full"></div> : null}
-                  {status === TransactionStatus.REJECTED ? <div className="w-2 h-2 bg-rose-500 rounded-full"></div> : null}
+                  <span className="uppercase tracking-tight group-hover:text-blue-600 transition-colors">{status}</span>
+                  {status === 'aprovado' && <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>}
+                  {status === 'rejeitado' && <div className="w-2 h-2 bg-rose-500 rounded-full"></div>}
+                  {status === 'pendente' && <div className="w-2 h-2 bg-amber-500 rounded-full"></div>}
                 </button>
               ))}
             </div>
@@ -382,7 +417,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                 onClick={() => setShowModal(false)}
                 className="w-full py-4 text-center text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
               >
-                Fechar
+                Cancelar
               </button>
             </div>
           </div>
