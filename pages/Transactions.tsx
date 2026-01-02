@@ -111,7 +111,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
 
   const mapStatus = (status: string): TransactionStatus => {
     const s = status?.toLowerCase() || '';
-    if (s === successTerm || s === 'concluido') return TransactionStatus.RECHARGED;
+    if (s === successTerm || s === 'aprovado' || s === 'concluido' || s === 'recarregado') return TransactionStatus.RECHARGED;
     if (s === 'rejeitado') return TransactionStatus.REJECTED;
     return TransactionStatus.PENDING;
   };
@@ -400,8 +400,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
               disabled={!pendingTx || !selectedStatus}
               onClick={handleConfirm}
               className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${(!pendingTx || !selectedStatus)
-                  ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                  : 'bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/5 active:scale-95'
+                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                : 'bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/5 active:scale-95'
                 }`}
             >
               Atualizar Transação
@@ -421,7 +421,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                     onClick={() => setHistoryFilter(filter)}
                     className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${historyFilter === filter ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                   >
-                    {filter === 'all' ? 'Todos' : filter === successTerm ? successLabel : filter}
+                    {filter === 'all' ? 'Todos' : filter === successTerm ? successLabel : filter.charAt(0).toUpperCase() + filter.slice(1)}
                   </button>
                 ))}
               </div>
