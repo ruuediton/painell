@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../services/supabase';
 import { BonusCode } from '../types';
 import { Icons } from '../constants';
 
@@ -10,48 +11,109 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
   const [code, setCode] = useState('');
   const [bonusValue, setBonusValue] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
-  const [bonusCodes, setBonusCodes] = useState<BonusCode[]>([
-    { id: '1', code: 'BEMVINDO50', value: 50.00, expiryDate: '2024-12-31', createdAt: '2024-05-01' },
-    { id: '2', code: 'VIPDEEP100', value: 100.00, expiryDate: '2024-06-15', createdAt: '2024-05-10' },
-  ]);
+  const [bonusCodes, setBonusCodes] = useState<BonusCode[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddCode = () => {
+  useEffect(() => {
+    fetchBonusCodes();
+  }, []);
+
+  const fetchBonusCodes = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('codigos_presente')
+      .select('*')
+      .order('data_expiracao', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching bonuses:', error);
+    } else if (data) {
+      const mapped: BonusCode[] = data.map((item: any) => ({
+        id: item.id,
+        code: item.codigo_presente,
+        value: Number(item.valor_presente),
+        expiryDate: item.data_expiracao,
+        createdAt: item.data_inicio || new Date().toISOString()
+      }));
+      setBonusCodes(mapped);
+    }
+    setLoading(false);
+  };
+
+  const handleAddCode = async () => {
     if (!code || !bonusValue || !expiryDate) {
       alert('Por favor, preencha todos os campos do código.');
       return;
     }
 
-    const newBonus: BonusCode = {
-      id: Math.random().toString(36).substr(2, 9),
-      code: code.trim().toUpperCase(),
-      value: parseFloat(bonusValue),
-      expiryDate,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
+    try {
+      const newCodeStr = code.trim().toUpperCase();
+      const newVal = parseFloat(bonusValue);
 
-    setBonusCodes([newBonus, ...bonusCodes]);
-    onLogAction(
-      'Criação de Código de Recompensa',
-      `Admin gerou o código ${newBonus.code} com benefício de R$ ${newBonus.value.toFixed(2)}`
-    );
+      const { data, error } = await supabase
+        .from('codigos_presente')
+        .insert([
+          {
+            codigo_presente: newCodeStr,
+            valor_presente: newVal,
+            data_expiracao: expiryDate,
+            data_inicio: new Date().toISOString(),
+            ativo: true
+          }
+        ])
+        .select()
+        .single();
 
-    // Reset formulário
-    setCode('');
-    setBonusValue('');
-    setExpiryDate('');
-    alert(`Código ${newBonus.code} registrado com sucesso!`);
+      if (error) throw error;
+
+      if (data) {
+        setBonusCodes(prev => [
+          {
+            id: data.id,
+            code: data.codigo_presente,
+            value: Number(data.valor_presente),
+            expiryDate: data.data_expiracao,
+            createdAt: data.data_inicio
+          },
+          ...prev
+        ]);
+
+        onLogAction(
+          'Criação de Código de Recompensa',
+          `Admin gerou o código ${data.codigo_presente} com benefício de Kz ${data.valor_presente}`
+        );
+
+        setCode('');
+        setBonusValue('');
+        setExpiryDate('');
+        alert(`Código ${data.codigo_presente} registrado com sucesso!`);
+      }
+    } catch (err: any) {
+      alert('Erro ao criar bônus: ' + err.message);
+    }
   };
 
-  const handleDeleteCode = (id: string) => {
+  const handleDeleteCode = async (id: string) => {
     const codeToDelete = bonusCodes.find(c => c.id === id);
     if (!codeToDelete) return;
 
     if (window.confirm(`Confirmar exclusão definitiva do código ${codeToDelete.code}?`)) {
-      setBonusCodes(bonusCodes.filter(c => c.id !== id));
-      onLogAction(
-        'Exclusão de Código de Recompensa',
-        `Admin removeu o código ${codeToDelete.code} da plataforma.`
-      );
+      try {
+        const { error } = await supabase
+          .from('codigos_presente')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+
+        setBonusCodes(bonusCodes.filter(c => c.id !== id));
+        onLogAction(
+          'Exclusão de Código de Recompensa',
+          `Admin removeu o código ${codeToDelete.code} da plataforma.`
+        );
+      } catch (err: any) {
+        alert('Erro ao deletar: ' + err.message);
+      }
     }
   };
 
@@ -85,7 +147,7 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Bônus (R$)</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Bônus (Kz)</label>
                 <input
                   type="number"
                   className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none font-bold text-slate-900"
@@ -132,7 +194,9 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {bonusCodes.map((item) => (
+                  {loading ? (
+                    <tr><td colSpan={4} className="p-10 text-center">Carregando...</td></tr>
+                  ) : bonusCodes.map((item) => (
                     <tr key={item.id} className="group">
                       <td>
                         <span className="font-mono font-black text-sky-600 bg-sky-50 px-3 py-1.5 rounded-xl border border-sky-100 group-hover:bg-sky-500 group-hover:text-white transition-all">
@@ -140,7 +204,7 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
                         </span>
                       </td>
                       <td>
-                        <span className="font-black text-emerald-600">R$ {item.value.toLocaleString('pt-BR')}</span>
+                        <span className="font-black text-emerald-600">Kz {item.value.toLocaleString('pt-BR')}</span>
                       </td>
                       <td>
                         <span className="text-xs font-bold text-slate-400">{new Date(item.expiryDate).toLocaleDateString()}</span>
@@ -158,7 +222,7 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
                 </tbody>
               </table>
             </div>
-            {bonusCodes.length === 0 && (
+            {!loading && bonusCodes.length === 0 && (
               <div className="p-20 text-center">
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum bônus configurado</p>
               </div>

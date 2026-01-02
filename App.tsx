@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BottomNavbar from './components/BottomNavbar';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -12,10 +12,12 @@ import Login from './pages/Login';
 import TwoFactorGate from './pages/TwoFactorGate';
 import { Page, User, AuditLog } from './types';
 import { MOCK_LOGS } from './services/mockData';
+import { supabase } from './services/supabase';
 
 const App: React.FC = () => {
-  // Estados de Autenticação
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
   const [is2FAVerified, setIs2FAVerified] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
@@ -23,10 +25,28 @@ const App: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [logs, setLogs] = useState<AuditLog[]>(MOCK_LOGS);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoadingAuth(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIs2FAVerified(false);
+  };
+
   const addLogAction = (action: string, details: string) => {
     const newLog: AuditLog = {
       id: Math.random().toString(),
-      adminName: 'Admin Master',
+      adminName: session?.user?.email || 'Admin',
       action,
       date: new Date().toLocaleString(),
       details
@@ -39,15 +59,23 @@ const App: React.FC = () => {
     setCurrentPage('user-detail');
   };
 
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Login onLogin={() => { }} />;
   }
 
   if (is2FAEnabled && !is2FAVerified) {
     return (
       <TwoFactorGate
         onVerify={() => setIs2FAVerified(true)}
-        onCancel={() => setIsAuthenticated(false)}
+        onCancel={handleLogout}
       />
     );
   }
@@ -103,7 +131,9 @@ const App: React.FC = () => {
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-4 pr-6 border-r border-slate-200 hidden sm:flex">
               <div className="text-right">
-                <p className="text-xs font-black text-slate-900 uppercase tracking-wide">Admin Master</p>
+                <p className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                  {session?.user?.email?.split('@')[0] || 'Admin'}
+                </p>
                 <div className="flex items-center justify-end space-x-1.5">
                   <div className={`w-1.5 h-1.5 rounded-full ${is2FAEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
@@ -113,7 +143,7 @@ const App: React.FC = () => {
               </div>
               <div className="relative">
                 <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.email || 'Admin'}`}
                   className={`w-11 h-11 rounded-2xl bg-slate-100 border-2 shadow-sm transition-all ${is2FAEnabled ? 'border-emerald-500' : 'border-white'}`}
                   alt="Profile"
                 />
@@ -122,7 +152,7 @@ const App: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setIsAuthenticated(false)}
+              onClick={handleLogout}
               className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -137,7 +167,6 @@ const App: React.FC = () => {
         </main>
       </div>
 
-      {/* Bottom Navbar - Mobile Only */}
       <div className="lg:hidden">
         <BottomNavbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
       </div>

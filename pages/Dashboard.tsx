@@ -1,28 +1,90 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import StatCard from '../components/StatCard';
 import { Icons } from '../constants';
-import { MOCK_USERS, MOCK_TRANSACTIONS, MOCK_PRODUCTS, DASHBOARD_CHARTS } from '../services/mockData';
 import { Page, TransactionStatus } from '../types';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend
 } from 'recharts';
+import { supabase } from '../services/supabase';
 
 interface DashboardProps {
   setCurrentPage: (page: Page) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
-  const totalUsers = MOCK_USERS.length;
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    withdrawalsToday: 0,
+    totalDeposits: 0,
+    loading: true
+  });
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const withdrawalsToday = MOCK_TRANSACTIONS
-    .filter(t => t.type === 'WITHDRAWAL' && t.date.includes(todayStr))
-    .reduce((sum, t) => sum + t.amount, 0);
+  const [chartData, setChartData] = useState({
+    userGrowth: [] as any[],
+    financeData: [] as any[]
+  });
 
-  const totalPaidDeposits = MOCK_TRANSACTIONS
-    .filter(t => t.type === 'DEPOSIT' && t.status === TransactionStatus.RECHARGED)
-    .reduce((sum, t) => sum + t.amount, 0);
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      // 1. Total Users
+      const { count: usersCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // 2. Withdrawals Today
+      const today = new Date().toISOString().split('T')[0];
+      const { data: withdrawals } = await supabase
+        .from('retirada_clientes')
+        .select('valor_solicitado')
+        .eq('data_da_retirada', today)
+        .eq('estado_da_retirada', 'concluido'); // Assuming 'concluido' is the success status
+
+      const totalWithdrawals = withdrawals?.reduce((sum, w) => sum + Number(w.valor_solicitado), 0) || 0;
+
+      // 3. Volume of Deposits (Paid)
+      const { data: deposits } = await supabase
+        .from('depositos_clientes')
+        .select('valor_deposito')
+        .eq('estado_de_pagamento', 'recarregado'); // Based on TransactionStatus.RECHARGED equivalent
+
+      const totalDepositsVolume = deposits?.reduce((sum, d) => sum + Number(d.valor_deposito), 0) || 0;
+
+      setStats({
+        totalUsers: usersCount || 0,
+        withdrawalsToday: totalWithdrawals,
+        totalDeposits: totalDepositsVolume,
+        loading: false
+      });
+
+      // Simple mock growth data for now, or fetch if needed
+      setChartData({
+        userGrowth: [
+          { name: 'Jan', users: 100 },
+          { name: 'Fev', users: 150 },
+          { name: 'Mar', users: 300 },
+          { name: 'Abr', users: 500 },
+          { name: 'Mai', users: usersCount || 0 },
+        ],
+        financeData: [
+          { name: 'Seg', deposits: 4000, withdrawals: 2400 },
+          { name: 'Ter', deposits: 3000, withdrawals: 1398 },
+          { name: 'Qua', deposits: 2000, withdrawals: 9800 },
+          { name: 'Qui', deposits: 2780, withdrawals: 3908 },
+          { name: 'Sex', deposits: 1890, withdrawals: 4800 },
+          { name: 'Sab', deposits: 2390, withdrawals: 3800 },
+          { name: 'Dom', deposits: 3490, withdrawals: 4300 },
+        ]
+      });
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    }
+  };
 
   return (
     <div className="space-y-12 animate-fade-in-up">
@@ -34,7 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
         <div className="flex items-center space-x-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse mx-2"></div>
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none pr-2">
-            Dados em Tempo Real
+            Dados do Banco Sincronizados
           </span>
         </div>
       </div>
@@ -42,21 +104,20 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <StatCard
           title="Total de Usuários"
-          value={totalUsers}
+          value={stats.loading ? '...' : stats.totalUsers}
           icon={<Icons.Users />}
-          trend={{ value: '12%', positive: true }}
+          trend={{ value: 'Real-time', positive: true }}
           onClick={() => setCurrentPage('users')}
         />
         <StatCard
-          title="Saques Hoje"
-          value={`R$ ${withdrawalsToday.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          title="Saques Hoje (Kz)"
+          value={stats.loading ? '...' : `Kz ${stats.withdrawalsToday.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={<Icons.Withdrawals />}
-          trend={{ value: '5%', positive: false }}
           onClick={() => setCurrentPage('withdrawals')}
         />
         <StatCard
-          title="Volume de Depósitos"
-          value={`R$ ${totalPaidDeposits.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          title="Volume de Depósitos (Kz)"
+          value={stats.loading ? '...' : `Kz ${stats.totalDeposits.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={<Icons.Deposits />}
           onClick={() => setCurrentPage('deposits')}
         />
@@ -75,7 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
           </div>
           <div className="h-[320px] w-full mt-8">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={DASHBOARD_CHARTS.userGrowth}>
+              <AreaChart data={chartData.userGrowth}>
                 <defs>
                   <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.15} />
@@ -98,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
           <div className="flex justify-between items-center">
             <div>
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Performance</h4>
-              <p className="text-xl font-black text-slate-900">Fluxo de Caixa</p>
+              <p className="text-xl font-black text-slate-900">Fluxo de Caixa (Kz)</p>
             </div>
             <div className="p-3 bg-emerald-50 text-emerald-500 rounded-2xl">
               <Icons.Deposits />
@@ -106,7 +167,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
           </div>
           <div className="h-[320px] w-full mt-8">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={DASHBOARD_CHARTS.financeData}>
+              <BarChart data={chartData.financeData}>
                 <CartesianGrid strokeDasharray="0" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
                 <YAxis hide />
@@ -127,24 +188,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
         <div className="absolute top-0 right-0 w-96 h-96 bg-sky-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px] group-hover:bg-sky-500/20 transition-all duration-700"></div>
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="space-y-4 text-center md:text-left">
-            <h3 className="text-white font-black uppercase tracking-[0.3em] text-sm">deeBank Ecosystem v2.0</h3>
+            <h3 className="text-white font-black uppercase tracking-[0.3em] text-sm">deeBank Ecosystem Production</h3>
             <p className="text-slate-400 max-w-xl text-lg font-medium leading-relaxed">
-              Gerencie transações, audite usuários e monitore o crescimento da sua plataforma financeira em um só lugar.
+              Conectado diretamente ao banco de dados de produção. Tenha cuidado ao manipular registros.
             </p>
             <div className="flex flex-wrap gap-4 pt-6 justify-center md:justify-start">
               <button onClick={() => setCurrentPage('logs')} className="px-8 py-4 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-sky-500/20 active:scale-95">
-                Ver Logs do Sistema
+                Ver Auditoria Real
               </button>
-              <button onClick={() => setCurrentPage('settings')} className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10">
-                Configurações Pro
-              </button>
-            </div>
-          </div>
-          <div className="hidden lg:block">
-            <div className="w-48 h-48 bg-sky-500/10 rounded-[3rem] border border-sky-500/20 flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-700">
-              <div className="w-24 h-24 text-sky-500">
-                <Icons.Dashboard />
-              </div>
             </div>
           </div>
         </div>

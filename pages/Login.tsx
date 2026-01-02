@@ -1,42 +1,50 @@
-
 import React, { useState } from 'react';
+import { supabase } from '../services/supabase';
 
 interface LoginProps {
   onLogin: () => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Validação para Angola: 9 dígitos começando com 9
-  const isValidPhone = /^9\d{8}$/.test(phone);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidPhone) {
-      alert('Por favor, insira um número de telefone de Angola válido (9 dígitos começando com 9).');
-      return;
-    }
-    if (password.length < 6) {
-      alert('A senha deve ter pelo menos 6 caracteres.');
-      return;
-    }
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
 
-    if (isRegistering && !name) {
-      alert('Por favor, informe o seu nome completo.');
-      return;
+    try {
+      if (isRegistering) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) throw signUpError;
+
+        setSuccessMessage('Conta criada com sucesso! Verifique seu e-mail para confirmar (se necessário) ou faça login.');
+        setIsRegistering(false); // Switch back to login
+      } else {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+        onLogin();
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    onLogin();
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, '').slice(0, 9);
-    setPhone(val);
   };
 
   return (
@@ -52,77 +60,70 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </svg>
           </div>
           <h1 className="text-4xl font-black text-white tracking-tighter">painel<span className="text-sky-400">DeeBank</span></h1>
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]">{isRegistering ? 'Criar Conta Administrativa (Angola)' : 'Acesso Seguro via Telefone (+244)'}</p>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]">
+            {isRegistering ? 'Cadastro de Administrador' : 'Acesso Administrativo Seguro'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-slate-800/40 backdrop-blur-2xl p-8 rounded-[40px] border border-white/5 shadow-2xl space-y-5">
-          {isRegistering && (
-            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nome Completo</label>
-              <input 
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-slate-900/60 border-2 border-slate-700/50 px-6 py-4 rounded-2xl text-white outline-none focus:border-sky-500 focus:bg-slate-900 transition-all font-medium"
-                placeholder="Ex: Manuel dos Santos"
-              />
+          {error && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-xs font-bold text-center animate-pulse">
+              {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 text-xs font-bold text-center animate-pulse">
+              {successMessage}
             </div>
           )}
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Número de Telefone</label>
-            <div className="relative">
-              <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 font-bold">+244</span>
-              <input 
-                type="tel"
-                value={phone}
-                onChange={handlePhoneChange}
-                className={`w-full bg-slate-900/60 border-2 px-6 py-4 pl-20 rounded-2xl text-white outline-none transition-all font-mono font-bold text-lg ${phone && !isValidPhone ? 'border-rose-500/50 focus:border-rose-500' : 'border-slate-700/50 focus:border-sky-500'}`}
-                placeholder="923xxxxxx"
-              />
-            </div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">E-mail Corporativo</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-900/60 border-2 border-slate-700/50 px-6 py-4 rounded-2xl text-white outline-none focus:border-sky-500 focus:bg-slate-900 transition-all font-medium"
+              placeholder="admin@deebank.com"
+              required
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Senha de Segurança</label>
-            <input 
+            <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-slate-900/60 border-2 border-slate-700/50 px-6 py-4 rounded-2xl text-white outline-none focus:border-sky-500 focus:bg-slate-900 transition-all font-medium"
               placeholder="••••••••"
+              required
+              minLength={6}
             />
           </div>
 
-          {isRegistering && (
-            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Código de Convite</label>
-              <input 
-                type="text"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                className="w-full bg-slate-900/60 border-2 border-slate-700/50 px-6 py-4 rounded-2xl text-white outline-none focus:border-sky-500 transition-all font-mono font-bold"
-                placeholder="AO-XXXX"
-              />
-            </div>
-          )}
-
-          <button 
+          <button
             type="submit"
-            className="w-full py-5 bg-sky-500 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-sky-500/20 hover:bg-sky-400 active:scale-[0.97] transition-all mt-4"
+            disabled={loading}
+            className={`w-full py-5 bg-sky-500 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-sky-500/20 hover:bg-sky-400 active:scale-[0.97] transition-all mt-4 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {isRegistering ? 'Cadastrar em Angola' : 'Entrar no Painel'}
+            {loading ? 'Processando...' : (isRegistering ? 'Criar Nova Conta' : 'Entrar no Painel')}
           </button>
         </form>
 
         <div className="text-center space-y-4">
-          <button 
-            onClick={() => setIsRegistering(!isRegistering)}
+          <button
+            onClick={() => {
+              setIsRegistering(!isRegistering);
+              setError(null);
+              setSuccessMessage(null);
+            }}
             className="text-sky-400 text-[11px] font-black uppercase tracking-widest hover:text-sky-300 transition-colors"
           >
-            {isRegistering ? 'Já tem conta? Entrar' : 'Não tem conta? Solicitar Acesso'}
+            {isRegistering ? 'Já tem conta? Fazer Login' : 'Não tem conta? Cadastrar Admin'}
           </button>
-          
+
           <div className="flex items-center justify-center space-x-2 pt-4 opacity-50">
             <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
             <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.3em]">
