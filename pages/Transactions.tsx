@@ -15,6 +15,10 @@ interface TransactionsProps {
 }
 
 const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
+  // Determine specific terms for this transaction type
+  const successTerm = type === 'DEPOSIT' ? 'recarregado' : 'aprovado';
+  const successLabel = type === 'DEPOSIT' ? 'Recarregado' : 'Aprovado';
+
   const [phone, setPhone] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
@@ -22,8 +26,10 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
-  const [historyFilter, setHistoryFilter] = useState<'all' | 'aprovado' | 'rejeitado' | 'pendente'>('all');
-  const [searchStatus, setSearchStatus] = useState<'pendente' | 'aprovado' | 'rejeitado'>('pendente');
+
+  // States with dynamic types
+  const [historyFilter, setHistoryFilter] = useState<'all' | string>('all');
+  const [searchStatus, setSearchStatus] = useState<'pendente' | string>('pendente');
   const [searchDate, setSearchDate] = useState('');
 
   // Validação para Angola: 9 dígitos começando com 9
@@ -33,6 +39,15 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
   useEffect(() => {
     fetchRecentTransactions();
   }, [type, historyFilter]);
+
+  // Reset filters when type changes
+  useEffect(() => {
+    setHistoryFilter('all');
+    setSearchStatus('pendente');
+    setPhone('');
+    setPendingTx(null);
+    setHasSearched(false);
+  }, [type]);
 
   const fetchRecentTransactions = async () => {
     try {
@@ -46,11 +61,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
           .limit(20);
 
         if (historyFilter !== 'all') {
-          if (historyFilter === 'aprovado') {
-            query = query.in('estado_de_pagamento', ['aprovado', 'recarregado', 'concluido']);
-          } else {
-            query = query.eq('estado_de_pagamento', historyFilter);
-          }
+          query = query.eq('estado_de_pagamento', historyFilter);
         }
       } else {
         query = supabase
@@ -60,11 +71,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
           .limit(20);
 
         if (historyFilter !== 'all') {
-          if (historyFilter === 'aprovado') {
-            query = query.in('estado_da_retirada', ['aprovado', 'concluido']);
-          } else {
-            query = query.eq('estado_da_retirada', historyFilter);
-          }
+          query = query.eq('estado_da_retirada', historyFilter);
         }
       }
 
@@ -104,7 +111,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
 
   const mapStatus = (status: string): TransactionStatus => {
     const s = status?.toLowerCase() || '';
-    if (s === 'aprovado' || s === 'concluido' || s === 'recarregado') return TransactionStatus.RECHARGED;
+    if (s === successTerm || s === 'concluido') return TransactionStatus.RECHARGED;
     if (s === 'rejeitado') return TransactionStatus.REJECTED;
     return TransactionStatus.PENDING;
   };
@@ -125,12 +132,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             .select('*')
             .eq('user_id', userData.id);
 
-          // Status Filter
-          if (searchStatus === 'aprovado') {
-            query = query.in('estado_de_pagamento', ['aprovado', 'recarregado', 'concluido']);
-          } else {
-            query = query.eq('estado_de_pagamento', searchStatus);
-          }
+          // Status Filter (Exact match now since we use correct Terms)
+          query = query.eq('estado_de_pagamento', searchStatus);
 
           // Date Filter
           if (searchDate) {
@@ -160,11 +163,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
           .eq('telefone_do_usuario', phone);
 
         // Status Filter
-        if (searchStatus === 'aprovado') {
-          query = query.in('estado_da_retirada', ['aprovado', 'concluido']);
-        } else {
-          query = query.eq('estado_da_retirada', searchStatus);
-        }
+        query = query.eq('estado_da_retirada', searchStatus);
 
         // Date Filter
         if (searchDate) {
@@ -201,10 +200,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
     if (!pendingTx || !selectedStatus) return;
 
     try {
-      // Map UI Status to DB Status Strings (lowercase)
-      let dbStatus = 'pendente';
-      if (selectedStatus === 'aprovado') dbStatus = 'aprovado';
-      else if (selectedStatus === 'rejeitado') dbStatus = 'rejeitado';
+      // Use logic status directly
+      const dbStatus = selectedStatus;
 
       const table = type === 'DEPOSIT' ? 'depositos_clientes' : 'retirada_clientes';
       const statusCol = type === 'DEPOSIT' ? 'estado_de_pagamento' : 'estado_da_retirada';
@@ -282,13 +279,13 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                   <select
                     value={searchStatus}
                     onChange={(e) => {
-                      setSearchStatus(e.target.value as any);
+                      setSearchStatus(e.target.value);
                       if (hasSearched) setHasSearched(false);
                     }}
                     className="w-full h-[56px] px-4 bg-slate-800 border-2 border-slate-700 rounded-2xl text-white font-bold text-xs uppercase focus:border-sky-500 outline-none appearance-none"
                   >
                     <option value="pendente">Pendente</option>
-                    <option value="aprovado">Aprovado</option>
+                    <option value={successTerm}>{successLabel}</option>
                     <option value="rejeitado">Rejeitado</option>
                   </select>
                 </div>
@@ -418,13 +415,13 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
               <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">Histórico Recente</h3>
               <div className="flex bg-slate-100 p-1 rounded-xl">
-                {(['all', 'aprovado', 'rejeitado', 'pendente'] as const).map(filter => (
+                {(['all', successTerm, 'rejeitado', 'pendente'] as const).map(filter => (
                   <button
                     key={filter}
                     onClick={() => setHistoryFilter(filter)}
                     className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${historyFilter === filter ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                   >
-                    {filter === 'all' ? 'Todos' : filter}
+                    {filter === 'all' ? 'Todos' : filter === successTerm ? successLabel : filter}
                   </button>
                 ))}
               </div>
@@ -451,7 +448,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                       </td>
                       <td>
                         <span className={`badge ${t.status === TransactionStatus.RECHARGED ? 'badge-green' : t.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
-                          {t.status === TransactionStatus.RECHARGED ? 'Aprovado' : t.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
+                          {t.status === TransactionStatus.RECHARGED ? successLabel : t.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
                         </span>
                       </td>
                       <td>
@@ -474,7 +471,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
               <p className="text-slate-400 text-[10px] mt-2 font-bold uppercase">Definir estado final</p>
             </div>
             <div className="p-6 space-y-2">
-              {['aprovado', 'rejeitado', 'pendente'].map((status) => (
+              {[successTerm, 'rejeitado', 'pendente'].map((status) => (
                 <button
                   key={status}
                   onClick={() => {
@@ -483,8 +480,10 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                   }}
                   className="w-full py-4 px-6 hover:bg-slate-50 rounded-2xl text-sm font-black text-slate-700 transition-all text-left flex justify-between items-center group"
                 >
-                  <span className="uppercase tracking-tight group-hover:text-blue-600 transition-colors">{status}</span>
-                  {status === 'aprovado' && <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>}
+                  <span className="uppercase tracking-tight group-hover:text-blue-600 transition-colors uppercase">
+                    {status === successTerm ? successLabel : status}
+                  </span>
+                  {status === successTerm && <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>}
                   {status === 'rejeitado' && <div className="w-2 h-2 bg-rose-500 rounded-full"></div>}
                   {status === 'pendente' && <div className="w-2 h-2 bg-amber-500 rounded-full"></div>}
                 </button>
