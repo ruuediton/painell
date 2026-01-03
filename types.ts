@@ -21,6 +21,7 @@ export interface UserProduct {
   name: string;
   purchaseDate: string;
   status: 'active' | 'expired' | 'pending';
+  dailyIncome?: number;
 }
 
 export interface BankAccount {
