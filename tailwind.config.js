@@ -2,10 +2,31 @@
 export default {
     content: [
         "./index.html",
-        "./**/*.{js,ts,jsx,tsx}",
+        "./*.tsx",
+        "./*.ts",
+        "./pages/**/*.{ts,tsx}",
+        "./components/**/*.{ts,tsx}",
+        "./services/**/*.{ts,tsx}",
     ],
     theme: {
         extend: {
+            colors: {
+                border: "var(--border)",
+                input: "var(--input)",
+                ring: "var(--ring)",
+                background: "var(--background)",
+                foreground: "var(--foreground)",
+                primary: {
+                    DEFAULT: "var(--primary)",
+                    dark: "var(--primary-dark)",
+                },
+                secondary: "var(--secondary)",
+                accent: "var(--accent)",
+                card: {
+                    DEFAULT: "var(--card)",
+                    foreground: "var(--card-foreground)",
+                },
+            },
             fontFamily: {
                 inter: ['Inter', 'sans-serif'],
             },
