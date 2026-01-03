@@ -79,48 +79,44 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
         <div className="overflow-x-auto">
-          <table className="premium-table">
+          <table className="premium-table w-full">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Telefone</th>
-                <th>Saldo (Kz)</th>
-                <th>Total Depósito</th>
-                <th>Estado</th>
-                <th className="text-right">Ações</th>
+                <th className="text-left p-6">Número</th>
+                <th className="text-left p-6">Saldo (Kz)</th>
+                <th className="text-left p-6">Data/Hora de Registro</th>
+                <th className="text-right p-6">Ação</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="p-20 text-center text-slate-400">Carregando usuários...</td></tr>
+                <tr><td colSpan={4} className="p-20 text-center text-slate-400">Carregando usuários...</td></tr>
               ) : users.map((user) => (
                 <tr
                   key={user.id}
-                  className="cursor-pointer group"
+                  className="cursor-pointer group hover:bg-slate-50/50 transition-colors"
                   onClick={() => onSelectUser(user)}
                 >
-                  <td>
-                    <span className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg">
-                      {user.id.substring(0, 8)}...
-                    </span>
-                  </td>
-                  <td>
+                  <td className="p-6">
                     <span className="font-black text-slate-700 text-sm">{user.phone}</span>
                   </td>
-                  <td>
+                  <td className="p-6">
                     <span className="font-black text-emerald-600">Kz {user.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </td>
-                  <td>
-                    <span className="font-bold text-slate-600">Kz {user.totalDeposited.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </td>
-                  <td>
-                    <span className={`badge ${user.status === UserStatus.ACTIVE ? 'badge-green' : 'badge-red'}`}>
-                      {user.status === UserStatus.ACTIVE ? 'Ativo' : 'Bloqueado'}
+                  <td className="p-6">
+                    <span className="font-bold text-slate-500 text-xs uppercase">
+                      {new Date(user.createdAt).toLocaleString('pt-BR')}
                     </span>
                   </td>
-                  <td className="text-right">
-                    <button className="p-2 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-xl transition-all">
-                      <Icons.ChevronRight />
+                  <td className="text-right p-6">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectUser(user);
+                      }}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                    >
+                      Ver Detalhes
                     </button>
                   </td>
                 </tr>
