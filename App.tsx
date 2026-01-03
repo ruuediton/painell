@@ -11,6 +11,7 @@ import Dados from './pages/Dados';
 import Login from './pages/Login';
 import TwoFactorGate from './pages/TwoFactorGate';
 import Products from './pages/Products';
+import Logs from './pages/Logs';
 import { ToastContainer } from './components/Toast';
 import { Page, User, AuditLog } from './types';
 import { MOCK_LOGS } from './services/mockData';
@@ -96,7 +97,8 @@ const App: React.FC = () => {
       case 'deposits': return <Transactions type="DEPOSIT" onLogAction={addLogAction} />;
       case 'withdrawals': return <Transactions type="WITHDRAWAL" onLogAction={addLogAction} />;
       case 'bonus': return <Bonus onLogAction={addLogAction} />;
-      case 'logs': return <Suporte />;
+      case 'logs': return <Logs customLogs={logs} />;
+      case 'suporte': return <Suporte />;
       case 'settings': return <Dados />;
       case 'products': return <Products />;
       default: return <Dashboard setCurrentPage={setCurrentPage} />;

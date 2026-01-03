@@ -14,8 +14,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
     { id: 'deposits', label: 'Depósitos', icon: Icons.Deposits },
     { id: 'withdrawals', label: 'Saques', icon: Icons.Withdrawals },
     { id: 'bonus', label: 'Bônus', icon: Icons.Bonus },
-    { id: 'logs', label: 'Suporte', icon: Icons.Logs },
-    { id: 'settings', label: 'Dados', icon: Icons.Dashboard }, // Replaced 'Ajustes' with 'Dados'
+    { id: 'logs', label: 'Logs', icon: Icons.Logs },
+    { id: 'suporte', label: 'Suporte', icon: Icons.Users }, // Using a suitable icon or Icons.Logs if preferred
+    { id: 'settings', label: 'Dados', icon: Icons.Dashboard },
     { id: 'products', label: 'Produtos', icon: Icons.Products },
   ];
 

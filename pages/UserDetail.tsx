@@ -194,17 +194,20 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
 
   const handleChangePassword = async () => {
     if (!newPassword) return;
-    // Note: Use a Remote Procedure Call or Edge Function for security in production.
-    // For this context, we simulate or attempt the only available client-side method if keys allow.
     try {
       setIsSubmitting(true);
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      // We use the custom RPC created in the database to update the selected user's password
+      const { error } = await supabase.rpc('admin_update_user_password', {
+        target_user_id: user.id,
+        new_password: newPassword
+      });
 
       if (error) throw error;
 
-      showToast('Senha atualizada com sucesso!', 'success');
+      showToast('Senha do usuário atualizada com sucesso!', 'success');
       setShowPasswordModal(false);
-      onLogAction('Alteração de Senha', `Admin alterou a senha do usuário ${user.id}`);
+      setNewPassword('');
+      onLogAction('Alteração de Senha', `Admin alterou a senha do usuário ${user.id} (${user.name})`);
 
     } catch (err: any) {
       showToast('Erro ao tentar alterar senha: ' + err.message, 'error');
@@ -261,6 +264,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
       }
       setIsEditingBank(false);
       fetchUserDetails();
+      onLogAction('Dados Bancários', `Admin atualizou dados bancários do usuário ${user.name}`);
       showToast('Dados bancários salvos!', 'success');
     } catch (error: any) {
       showToast('Erro ao salvar dados bancários: ' + error.message, 'error');
@@ -274,6 +278,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
       if (!error) {
         setBankInfo(null);
         setNewBankData({ bank: '', owner: '', iban: '' });
+        onLogAction('Dados Bancários', `Admin removeu dados bancários do usuário ${user.name}`);
         showToast('Dados bancários removidos.', 'success');
       } else {
         showToast('Erro ao deletar: ' + error.message, 'error');
@@ -302,6 +307,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
       if (error) throw error;
 
       fetchUserDetails();
+      onLogAction('Produto do Usuário', `Admin alterou renda diária do produto no usuário ${user.name} para Kz ${newIncome}`);
       showToast('Renda do produto atualizada!', 'success');
     } catch (err: any) {
       showToast('Erro ao atualizar renda: ' + err.message, 'error');
@@ -319,6 +325,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
         if (error) throw error;
 
         fetchUserDetails();
+        onLogAction('Produto do Usuário', `Admin removeu produto ${productId} do usuário ${user.name}`);
         showToast('Produto removido com sucesso!', 'success');
       } catch (err: any) {
         showToast('Erro ao remover produto: ' + err.message, 'error');
