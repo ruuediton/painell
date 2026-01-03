@@ -5,9 +5,10 @@ import { Page } from '../types';
 interface SidebarProps {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
+  adminEmail?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEmail }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
     { id: 'users', label: 'Usuários', icon: Icons.Users },
@@ -15,13 +16,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
     { id: 'withdrawals', label: 'Saques', icon: Icons.Withdrawals },
     { id: 'bonus', label: 'Bônus', icon: Icons.Bonus },
     { id: 'logs', label: 'Logs', icon: Icons.Logs },
-    { id: 'suporte', label: 'Suporte', icon: Icons.Users }, // Using a suitable icon or Icons.Logs if preferred
-    { id: 'settings', label: 'Dados', icon: Icons.Dashboard },
+    { id: 'suporte', label: 'Suporte', icon: Icons.Users },
+    { id: 'settings', label: 'Ajustes', icon: Icons.Dashboard },
     { id: 'products', label: 'Produtos', icon: Icons.Products },
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-72 bg-slate-900 h-screen sticky top-0 overflow-y-auto border-r border-slate-800">
+    <aside className="flex flex-col w-full lg:w-72 bg-slate-900 h-screen sticky top-0 overflow-y-auto border-r border-slate-800">
       <div className="p-8">
         <div className="flex items-center space-x-3 mb-10">
           <div className="bg-sky-500 p-2 rounded-xl shadow-lg shadow-sky-500/20">
@@ -65,14 +66,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
         <div className="bg-slate-800/50 rounded-[2rem] p-5 border border-slate-700/50">
           <div className="flex items-center space-x-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center border border-sky-500/20">
-              <Icons.Bonus />
+              <Icons.Dashboard />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black text-sky-400 uppercase tracking-[0.2em]">Versão Pro</p>
-              <p className="text-xs font-bold text-white">deeBank Admin</p>
+              <p className="text-[10px] font-bold text-slate-300 truncate">{adminEmail || 'DeepAdmin Console'}</p>
             </div>
           </div>
-          <button className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors">
+          <p className="text-[9px] text-slate-500 font-medium px-1 mb-3">Painel de Administração de Alta Performance</p>
+          <button className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+            <Icons.Logs />
             Documentação
           </button>
         </div>

@@ -109,7 +109,13 @@ const App: React.FC = () => {
   return (
     <div className="flex bg-slate-50 min-h-screen text-slate-900 font-inter selection:bg-sky-500 selection:text-white">
       {/* Sidebar - Desktop */}
-      <Sidebar currentPage={currentPage} setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }} />
+      <div className="hidden lg:flex h-screen sticky top-0">
+        <Sidebar
+          currentPage={currentPage}
+          setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }}
+          adminEmail={session?.user?.email}
+        />
+      </div>
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
@@ -121,7 +127,11 @@ const App: React.FC = () => {
             className="w-72 h-full bg-slate-900 animate-in slide-in-from-left duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            <Sidebar currentPage={currentPage} setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }} />
+            <Sidebar
+              currentPage={currentPage}
+              setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }}
+              adminEmail={session?.user?.email}
+            />
           </div>
         </div>
       )}

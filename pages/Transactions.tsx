@@ -9,6 +9,7 @@ interface ExtendedTransaction extends Transaction {
   bankName?: string;
   iban?: string;
   netValue?: number;
+  proofUrl?: string;
 }
 
 interface TransactionsProps {
@@ -186,7 +187,8 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
               status: mapStatus(txData.estado_de_pagamento),
               date: txData.created_at,
               type: 'DEPOSIT',
-              bankName: txData.nome_do_banco
+              bankName: txData.nome_do_banco,
+              proofUrl: txData.url_comprovativo
             });
           }
         }
@@ -506,6 +508,26 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                             </button>
                           </div>
                         </>
+                      )}
+
+                      {type === 'DEPOSIT' && pendingTx.proofUrl && (
+                        <div className="space-y-3">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Comprovativo de Depósito</p>
+                          <div className="bg-white p-2 rounded-[2rem] border border-slate-100 shadow-inner overflow-hidden group/img relative">
+                            <img
+                              src={supabase.storage.from('comprovativos').getPublicUrl(pendingTx.proofUrl).data.publicUrl}
+                              alt="Comprovativo"
+                              className="w-full h-auto rounded-[1.5rem] object-contain max-h-[500px] bg-slate-50 transition-transform duration-500 group-hover/img:scale-[1.02]"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/0 group-hover/img:bg-slate-900/5 transition-colors pointer-events-none"></div>
+                          </div>
+                          <button
+                            onClick={() => window.open(supabase.storage.from('comprovativos').getPublicUrl(pendingTx.proofUrl || '').data.publicUrl, '_blank')}
+                            className="w-full py-3 text-sky-500 font-black text-[9px] uppercase tracking-widest hover:bg-sky-50 rounded-xl transition-all"
+                          >
+                            Ver Imagem Completa ↗
+                          </button>
+                        </div>
                       )}
                     </div>
 

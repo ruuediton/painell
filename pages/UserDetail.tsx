@@ -199,6 +199,33 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (window.confirm('⚠️ AVISO CRÍTICO: Você está prestes a deletar PERMANENTEMENTE este usuário e TODOS os seus registros (depósitos, saques, compras, conta bancária, etc). Esta ação não pode ser desfeita. Deseja continuar?')) {
+      const confirmText = prompt('Para confirmar a exclusão, digite "DELETAR":');
+      if (confirmText !== 'DELETAR') return showToast('Exclusão cancelada.', 'info');
+
+      try {
+        setIsSubmitting(true);
+        const { error } = await supabase.rpc('admin_delete_user', {
+          target_user_id: user.id
+        });
+
+        if (error) throw error;
+
+        showToast('Usuário deletado permanentemente!', 'success');
+        onLogAction('Deleção de Usuário', `Admin apagou permanentemente o usuário ${user.id} (${user.name})`);
+
+        // Go back after deletion
+        setTimeout(() => onBack(), 1500);
+
+      } catch (err: any) {
+        showToast('Erro ao deletar usuário: ' + err.message, 'error');
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
   const handleSaveBank = async () => {
     try {
       if (bankInfo?.id) {
@@ -329,12 +356,15 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
                 Editar Saldo
               </button>
               <button onClick={handleBlockUser} className={`py-2.5 md:py-3 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${details.status === UserStatus.ACTIVE ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>
-                {details.status === UserStatus.ACTIVE ? 'Banir' : 'Desbanir'}
+                {details.status === UserStatus.ACTIVE ? 'Banir Conta' : 'Desbanir Conta'}
+              </button>
+              <button onClick={() => setShowPasswordModal(true)} className="py-2.5 md:py-3 bg-white/10 hover:bg-white/20 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all border border-white/10">
+                Alterar Senha
+              </button>
+              <button onClick={handleDeleteUser} className="py-2.5 md:py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-rose-600/20">
+                Deletar Conta
               </button>
             </div>
-            <button onClick={() => setShowPasswordModal(true)} className="w-full mt-2 md:mt-3 py-2.5 md:py-3 bg-white/10 hover:bg-white/20 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all border border-white/10">
-              Alterar Senha
-            </button>
           </div>
 
           <div className="premium-card p-5 md:p-6 space-y-4">
