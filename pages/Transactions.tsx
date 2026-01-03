@@ -41,6 +41,23 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
 
   useEffect(() => {
     fetchRecentTransactions();
+
+    // Set up realtime subscription
+    const table = type === 'DEPOSIT' ? 'depositos_clientes' : 'retirada_clientes';
+    const channel = supabase
+      .channel(`recent_tx_${type}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table },
+        () => {
+          fetchRecentTransactions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [type, historyFilter]);
 
   // Reset filters when type changes
@@ -60,9 +77,10 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
       let query;
 
       if (type === 'DEPOSIT') {
+        // Using explicit join via user_id relationship
         query = supabase
           .from('depositos_clientes')
-          .select('*, profiles(full_name, phone)')
+          .select('*, profiles:user_id(full_name, phone)')
           .order('created_at', { ascending: false })
           .limit(20);
 
@@ -81,20 +99,30 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         }
       }
 
-      const { data } = await query;
+      const { data, error } = await query;
+
+      if (error) {
+        console.error(`Error fetching ${type}:`, error);
+        showToast(`Erro ao carregar ${type === 'DEPOSIT' ? 'depósitos' : 'saques'}`, 'error');
+        return;
+      }
 
       if (data) {
         if (type === 'DEPOSIT') {
-          const mapped: Transaction[] = data.map((d: any) => ({
-            id: d.id,
-            userId: d.user_id,
-            userName: d.profiles?.full_name || 'Desconhecido',
-            userPhone: d.profiles?.phone || 'N/A',
-            amount: Number(d.valor_deposito),
-            status: mapStatus(d.estado_de_pagamento),
-            date: new Date(d.created_at).toLocaleDateString('pt-BR'),
-            type: 'DEPOSIT'
-          }));
+          const mapped: Transaction[] = data.map((d: any) => {
+            // Check both possible structures due to relationship mapping
+            const profile = d.profiles;
+            return {
+              id: d.id,
+              userId: d.user_id,
+              userName: profile?.full_name || 'Desconhecido',
+              userPhone: profile?.phone || 'N/A',
+              amount: Number(d.valor_deposito),
+              status: mapStatus(d.estado_de_pagamento),
+              date: new Date(d.created_at).toLocaleDateString('pt-BR'),
+              type: 'DEPOSIT'
+            };
+          });
           setRecentTransactions(mapped);
         } else {
           const mapped: Transaction[] = data.map((d: any) => ({
@@ -111,7 +139,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Unexpected error:', err);
     }
   };
 
