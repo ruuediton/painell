@@ -585,7 +585,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
               )}
               {activeTab === 'products' && (
                 <div className="p-6 space-y-4">
-                  {purchasedProducts.map(p => (
+                  {purchasedProducts.map((p: UserProduct) => (
                     <div key={p.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-sky-500/30 transition-all">
                       <div>
                         <h4 className="font-bold text-slate-900 text-sm">{p.name}</h4>
