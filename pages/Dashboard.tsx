@@ -18,6 +18,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
     withdrawalsToday: 0,
     totalDeposits: 0,
     totalVipUsers: 0,
+    userTrend: 0,
+    vipTrend: 0,
     loading: true
   });
 
@@ -32,63 +34,115 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
 
   const fetchDashboardData = async () => {
     try {
-      // 1. Total Users
-      const { count: usersCount } = await supabase
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const isoToday = startOfToday.toISOString();
+
+      const yesterday = new Date(startOfToday);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isoYesterday = yesterday.toISOString();
+
+      // 1. Total Users & Trend
+      const { count: totalUsers } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      // 2. Withdrawals Today
-      const today = new Date().toISOString().split('T')[0];
+      const { count: usersYesterday } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .lt('created_at', isoToday);
+
+      const userDiff = (totalUsers || 0) - (usersYesterday || 0);
+
+      // 2. VIP Users & Trend
+      const { data: vips } = await supabase
+        .from('user_purchases')
+        .select('user_id, purchase_date');
+
+      const uniqueVips = new Set(vips?.map(v => v.user_id)).size;
+      const vipsYesterday = new Set(vips?.filter(v => new Date(v.purchase_date) < startOfToday).map(v => v.user_id)).size;
+      const vipDiff = uniqueVips - vipsYesterday;
+
+      // 3. Withdrawals Today
       const { data: withdrawals } = await supabase
         .from('retirada_clientes')
         .select('valor_solicitado')
-        .eq('data_da_retirada', today)
-        .eq('estado_da_retirada', 'concluido'); // Assuming 'concluido' is the success status
+        .gte('data_de_criacao', isoToday)
+        .or('estado_da_retirada.eq.aprovado,estado_da_retirada.eq.concluido');
 
-      const totalWithdrawals = withdrawals?.reduce((sum, w) => sum + Number(w.valor_solicitado), 0) || 0;
+      const totalWithdrawalsToday = withdrawals?.reduce((sum, w) => sum + Number(w.valor_solicitado), 0) || 0;
 
-      // 3. Volume of Deposits (Paid)
+      // 4. Deposits Today
       const { data: deposits } = await supabase
         .from('depositos_clientes')
         .select('valor_deposito')
-        .eq('estado_de_pagamento', 'recarregado'); // Based on TransactionStatus.RECHARGED equivalent
+        .gte('created_at', isoToday)
+        .eq('estado_de_pagamento', 'recarregado');
 
-      const totalDepositsVolume = deposits?.reduce((sum, d) => sum + Number(d.valor_deposito), 0) || 0;
-
-      // 4. VIP Users (Amount Paid >= 9000)
-      const { data: vipPurchases } = await supabase
-        .from('user_purchases')
-        .select('user_id')
-        .gte('amount_paid', 9000);
-
-      const uniqueVips = new Set(vipPurchases?.map(p => p.user_id)).size;
+      const totalDepositsToday = deposits?.reduce((sum, d) => sum + Number(d.valor_deposito), 0) || 0;
 
       setStats({
-        totalUsers: usersCount || 0,
-        withdrawalsToday: totalWithdrawals,
-        totalDeposits: totalDepositsVolume,
+        totalUsers: totalUsers || 0,
+        withdrawalsToday: totalWithdrawalsToday,
+        totalDeposits: totalDepositsToday,
         totalVipUsers: uniqueVips,
+        userTrend: userDiff,
+        vipTrend: vipDiff,
         loading: false
       });
 
-      // Simple mock growth data for now, or fetch if needed
+      // 5. User Growth (Last 5 Months)
+      const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const growthData = [];
+      for (let i = 4; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthName = months[d.getMonth()];
+        const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .lte('created_at', lastDay);
+
+        growthData.push({ name: monthName, users: count || 0 });
+      }
+
+      // 6. Finance Flow (Last 7 Days)
+      const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+      const financeData = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dayName = weekDays[d.getDay()];
+        const dayStart = new Date(d.setHours(0, 0, 0, 0)).toISOString();
+        const dayEnd = new Date(d.setHours(23, 59, 59, 999)).toISOString();
+
+        const { data: dayDep } = await supabase
+          .from('depositos_clientes')
+          .select('valor_deposito')
+          .gte('created_at', dayStart)
+          .lte('created_at', dayEnd)
+          .eq('estado_de_pagamento', 'recarregado');
+
+        const { data: dayWit } = await supabase
+          .from('retirada_clientes')
+          .select('valor_solicitado')
+          .gte('data_de_criacao', dayStart)
+          .lte('data_de_criacao', dayEnd)
+          .or('estado_da_retirada.eq.aprovado,estado_da_retirada.eq.concluido');
+
+        financeData.push({
+          name: dayName,
+          deposits: dayDep?.reduce((sum, item) => sum + Number(item.valor_deposito), 0) || 0,
+          withdrawals: dayWit?.reduce((sum, item) => sum + Number(item.valor_solicitado), 0) || 0
+        });
+      }
+
       setChartData({
-        userGrowth: [
-          { name: 'Jan', users: 100 },
-          { name: 'Fev', users: 150 },
-          { name: 'Mar', users: 300 },
-          { name: 'Abr', users: 500 },
-          { name: 'Mai', users: usersCount || 0 },
-        ],
-        financeData: [
-          { name: 'Seg', deposits: 4000, withdrawals: 2400 },
-          { name: 'Ter', deposits: 3000, withdrawals: 1398 },
-          { name: 'Qua', deposits: 2000, withdrawals: 9800 },
-          { name: 'Qui', deposits: 2780, withdrawals: 3908 },
-          { name: 'Sex', deposits: 1890, withdrawals: 4800 },
-          { name: 'Sab', deposits: 2390, withdrawals: 3800 },
-          { name: 'Dom', deposits: 3490, withdrawals: 4300 },
-        ]
+        userGrowth: growthData,
+        financeData: financeData
       });
 
     } catch (err) {
@@ -122,14 +176,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
               title="Total de Usuários"
               value={stats.totalUsers}
               icon={<Icons.Users />}
-              trend={{ value: 'Tempo Real', positive: true }}
+              trend={{ value: `${stats.userTrend > 0 ? '+' : ''}${stats.userTrend} Tempo Real`, positive: stats.userTrend >= 0 }}
               onClick={() => setCurrentPage('users')}
             />
             <StatCard
               title="Usuários VIP"
               value={stats.totalVipUsers}
               icon={<Icons.Bonus />}
-              trend={{ value: 'Ativos agora', positive: true }}
+              trend={{ value: `${stats.vipTrend > 0 ? '+' : ''}${stats.vipTrend} desde ontem`, positive: stats.vipTrend >= 0 }}
               onClick={() => setCurrentPage('users')}
             />
             <StatCard
