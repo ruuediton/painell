@@ -15,9 +15,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEma
     { id: 'deposits', label: 'Depósitos', icon: Icons.Deposits },
     { id: 'withdrawals', label: 'Saques', icon: Icons.Withdrawals },
     { id: 'bonus', label: 'Bônus', icon: Icons.Bonus },
-    { id: 'logs', label: 'Logs', icon: Icons.Logs },
     { id: 'suporte', label: 'Suporte', icon: Icons.Users },
-    { id: 'settings', label: 'Ajustes', icon: Icons.Dashboard },
+    { id: 'settings', label: 'Dados', icon: Icons.Dashboard },
     { id: 'products', label: 'Produtos', icon: Icons.Products },
   ];
 

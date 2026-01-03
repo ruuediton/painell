@@ -159,7 +159,7 @@ const App: React.FC = () => {
 
           <div className="hidden lg:block">
             <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
-              Sistema / <span className="text-slate-900">{currentPage === 'settings' ? 'AJUSTES' : currentPage.toUpperCase()}</span>
+              Sistema / <span className="text-slate-900">{currentPage === 'settings' ? 'DADOS' : currentPage.toUpperCase()}</span>
             </h2>
           </div>
 
