@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { Icons } from '../constants';
-import { ProductStatus } from '../types';
+// Removed unused ProductStatus import
 
 interface ProductDB {
   id: string;
