@@ -77,7 +77,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction, isAd
       let dailyTotal = 0;
       if (purchaseRes.data) {
         const mappedProducts: UserProduct[] = purchaseRes.data.map((p: any) => {
-          const income = p.daily_income_user || p.products?.daily_income || 0;
+          const income = p.daily_income || p.products?.daily_income || 0;
           dailyTotal += Number(income);
           return {
             id: p.id,
@@ -279,15 +279,11 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction, isAd
     if (isNaN(newIncome)) return alert('Valor inválido');
 
     try {
-      // Assuming user_purchases has a 'daily_income_user' override column or similar.
-      // If not, we might need to add it or update a specific field. 
-      // For this implementations, based on common patterns, let's assume we can update 'daily_income_user' or fail if column missing.
-      // NOTE: If the table doesn't have this column, this will fail. Ensure schema supports it.
-      // As a fallback/alternative if schema is strict, we might update a 'custom_daily_income' field if available.
+      // Update the daily income for this specific purchase in user_purchases
 
       const { error } = await supabase
         .from('user_purchases')
-        .update({ daily_income_user: newIncome })
+        .update({ daily_income: newIncome })
         .eq('id', productId);
 
       if (error) throw error;

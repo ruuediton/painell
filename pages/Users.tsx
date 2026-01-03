@@ -63,8 +63,8 @@ const Users: React.FC<UsersProps> = ({ onSelectUser, isAdminMaster }) => {
   // Fetch products for a specific user from Supabase
   const fetchUserProducts = async (userId: string) => {
     const { data, error } = await supabase
-      .from('user_products')
-      .select('*')
+      .from('user_purchases')
+      .select('*, products(name, daily_income)')
       .eq('user_id', userId);
     if (error) {
       console.error('Error fetching user products:', error);
@@ -94,14 +94,27 @@ const Users: React.FC<UsersProps> = ({ onSelectUser, isAdminMaster }) => {
       p.id === productId ? { ...p, daily_income: newIncome } : p
     );
     setSelectedUserProducts(updated);
-    // Optionally persist change to Supabase here
+
+    // Persist change to Supabase
+    (async () => {
+      try {
+        const { error } = await supabase
+          .from('user_purchases')
+          .update({ daily_income: newIncome })
+          .eq('id', productId);
+        if (error) throw error;
+        showToast('Renda atualizada!', 'success');
+      } catch (err: any) {
+        showToast('Erro ao salvar: ' + err.message, 'error');
+      }
+    })();
   };
 
   // Delete product from user (remove from UI only for demo)
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm('Deseja remover este produto?')) return;
     const { error } = await supabase
-      .from('user_products')
+      .from('user_purchases')
       .delete()
       .eq('id', productId);
     if (error) {
