@@ -39,45 +39,31 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
   const fetchUserDetails = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      // Parallelize fetches for better performance
+      const [profileRes, bankRes, subRes, purchaseRes, depositsRes, withdrawalsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('bancos_clientes').select('*').eq('user_id', user.id).single(),
+        supabase.from('red_equipe').select('*', { count: 'exact', head: true }).eq('user_id_convidador', user.id),
+        supabase.from('user_purchases').select('*, products(name, daily_income)').eq('user_id', user.id),
+        supabase.from('depositos_clientes').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('retirada_clientes').select('*').eq('user_id', user.id).order('data_de_criacao', { ascending: false })
+      ]);
 
-      if (profile) {
+      if (profileRes.data) {
+        const p = profileRes.data;
         setDetails(prev => ({
           ...prev,
-          name: profile.full_name || prev.name,
-          phone: profile.phone || prev.phone,
-          balance: Number(profile.balance),
-          status: profile.state === 'bloqueado' ? UserStatus.BLOCKED : UserStatus.ACTIVE,
-          createdAt: profile.created_at
+          name: p.full_name || prev.name,
+          phone: p.phone || prev.phone,
+          balance: Number(p.balance),
+          status: p.state === 'bloqueado' ? UserStatus.BLOCKED : UserStatus.ACTIVE,
+          createdAt: p.created_at
         }));
       }
 
-      // 2. Fetch Deposits
-      const { data: deposits } = await supabase
-        .from('depositos_clientes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      // 3. Fetch Bank Info from 'bancos_clientes'
-      const { data: bankData } = await supabase
-        .from('bancos_clientes')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (bankData) {
-        const info = {
-          id: bankData.id,
-          bank: bankData.nome_do_banco,
-          owner: bankData.nome_completo,
-          iban: bankData.iban
-        };
+      if (bankRes.data) {
+        const bd = bankRes.data;
+        const info = { id: bd.id, bank: bd.nome_do_banco, owner: bd.nome_completo, iban: bd.iban };
         setBankInfo(info);
         setNewBankData(info);
       } else {
@@ -85,82 +71,54 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
         setNewBankData({ bank: '', owner: '', iban: '' });
       }
 
-      // 4. Fetch Withdrawals (for history only now)
-      const { data: withdrawals } = await supabase
-        .from('retirada_clientes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('data_de_criacao', { ascending: false });
-
-      // Combine Transactions
-      const txs: Transaction[] = [];
-      if (deposits) {
-        deposits.forEach((d: any) => {
-          txs.push({
-            id: d.id,
-            userId: d.user_id,
-            userName: profile?.full_name || '',
-            userPhone: profile?.phone || '',
-            amount: Number(d.valor_deposito),
-            status: d.estado_de_pagamento === 'recarregado' ? TransactionStatus.RECHARGED :
-              d.estado_de_pagamento === 'rejeitado' ? TransactionStatus.REJECTED : TransactionStatus.PENDING,
-            date: new Date(d.created_at).toLocaleDateString(),
-            type: 'DEPOSIT',
-            reason: 'Depósito'
-          });
-        });
-      }
-      if (withdrawals) {
-        withdrawals.forEach((w: any) => {
-          txs.push({
-            id: w.id,
-            userId: w.user_id,
-            userName: w.nome_completo || '',
-            userPhone: w.telefone_do_usuario || '',
-            amount: Number(w.valor_solicitado),
-            status: (w.estado_da_retirada === 'concluido' || w.estado_da_retirada === 'aprovado') ? TransactionStatus.RECHARGED :
-              w.estado_da_retirada === 'rejeitado' ? TransactionStatus.REJECTED : TransactionStatus.PENDING,
-            date: new Date(w.data_de_criacao).toLocaleDateString(),
-            type: 'WITHDRAWAL',
-            reason: `Saque (${w.nome_do_banco})`
-          });
-        });
-      }
-      txs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setTransactions(txs);
-
-      // 4. Products & Daily Income
-      const { data: purchases } = await supabase
-        .from('user_purchases')
-        .select('*, products(name, daily_income)')
-        .eq('user_id', user.id);
+      setSubordinatesCount(subRes.count || 0);
 
       let dailyTotal = 0;
-      if (purchases) {
-        const mappedProducts: UserProduct[] = purchases.map((p: any) => {
-          if (p.products?.daily_income) dailyTotal += Number(p.products.daily_income);
+      if (purchaseRes.data) {
+        const mappedProducts: UserProduct[] = purchaseRes.data.map((p: any) => {
+          const income = p.daily_income_user || p.products?.daily_income || 0;
+          dailyTotal += Number(income);
           return {
             id: p.id,
-            name: p.products?.name || 'Produto',
+            name: p.products?.name || 'Produção Real',
             purchaseDate: new Date(p.purchase_date).toLocaleDateString(),
             status: 'active',
-            dailyIncome: p.daily_income_user || p.products?.daily_income || 0
+            dailyIncome: income
           };
         });
         setPurchasedProducts(mappedProducts);
       }
       setDailyIncome(dailyTotal);
 
-      // 5. Subordinates Count
-      const { count: subs } = await supabase
-        .from('red_equipe')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id_convidador', user.id);
+      // Map and combine transactions
+      const txs: Transaction[] = [];
+      const deposits = depositsRes.data || [];
+      const withdrawals = withdrawalsRes.data || [];
 
-      setSubordinatesCount(subs || 0);
+      deposits.forEach((d: any) => {
+        txs.push({
+          id: d.id, userId: d.user_id, userName: profileRes.data?.full_name || '', userPhone: profileRes.data?.phone || '',
+          amount: Number(d.valor_deposito),
+          status: d.estado_de_pagamento === 'recarregado' ? TransactionStatus.RECHARGED :
+            d.estado_de_pagamento === 'rejeitado' ? TransactionStatus.REJECTED : TransactionStatus.PENDING,
+          date: new Date(d.created_at).toLocaleDateString(), type: 'DEPOSIT', reason: 'Depósito em Produção'
+        });
+      });
+
+      withdrawals.forEach((w: any) => {
+        txs.push({
+          id: w.id, userId: w.user_id, userName: w.nome_completo || '', userPhone: w.telefone_do_usuario || '',
+          amount: Number(w.valor_solicitado),
+          status: (w.estado_da_retirada === 'concluido' || w.estado_da_retirada === 'aprovado') ? TransactionStatus.RECHARGED :
+            w.estado_da_retirada === 'rejeitado' ? TransactionStatus.REJECTED : TransactionStatus.PENDING,
+          date: new Date(w.data_de_criacao).toLocaleDateString(), type: 'WITHDRAWAL', reason: `Saque (${w.nome_do_banco})`
+        });
+      });
+
+      setTransactions(txs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 
     } catch (err) {
-      console.error(err);
+      console.error('Speed-fetch error:', err);
     } finally {
       setLoading(false);
     }

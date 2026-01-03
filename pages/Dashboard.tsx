@@ -279,22 +279,22 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
         </div>
       </div>
 
-      <div className="bg-slate-900 p-8 md:p-12 rounded-3xl md:rounded-[3rem] shadow-2xl shadow-sky-900/10 border border-slate-800 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-sky-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-[60px] md:blur-[100px] group-hover:bg-sky-500/20 transition-all duration-700"></div>
-        <div className="relative z-10 flex flex-col items-center justify-between gap-6 md:gap-10">
-          <div className="space-y-3 md:space-y-4 text-center md:text-left">
-            <h3 className="text-white font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-sm">deeBank Ecosystem</h3>
-            <p className="text-slate-400 max-w-xl text-sm md:text-lg font-medium leading-relaxed">
-              Conectado diretamente em produção. Tenha cuidado ao manipular registros.
+      <div className="bg-slate-900 px-8 py-6 rounded-[2rem] shadow-2xl shadow-sky-900/10 border border-slate-800 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-[60px] group-hover:bg-sky-500/10 transition-all duration-700"></div>
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-1 text-center md:text-left">
+            <h3 className="text-white font-black uppercase tracking-[0.2em] text-[10px]">deeBank Ecosystem</h3>
+            <p className="text-slate-400 text-xs font-medium max-w-md">
+              Produção Ativa. Tenha cuidado ao manipular registros sensíveis.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 justify-center md:justify-start">
-              <button onClick={() => setCurrentPage('logs')} className="px-6 md:px-8 py-3 md:py-4 bg-sky-500 hover:bg-sky-600 text-white rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-sky-500/20 active:scale-95">
-                Auditoria Real
-              </button>
-              <button onClick={() => setCurrentPage('products')} className="px-6 md:px-8 py-3 md:py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-slate-900/20 active:scale-95 border border-slate-700">
-                Produtos
-              </button>
-            </div>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setCurrentPage('logs')} className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg shadow-sky-500/20 active:scale-95">
+              Auditoria
+            </button>
+            <button onClick={() => setCurrentPage('products')} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-slate-700 active:scale-95">
+              Produtos
+            </button>
           </div>
         </div>
       </div>

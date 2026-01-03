@@ -16,9 +16,38 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const generateSafeCode = () => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    let result = '';
+
+    // 5 letters
+    for (let i = 0; i < 5; i++) {
+      result += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+    // 4 numbers
+    for (let i = 0; i < 4; i++) {
+      result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+
+    // Shuffle the result
+    return result.split('').sort(() => Math.random() - 0.5).join('');
+  };
+
   useEffect(() => {
     fetchBonusCodes();
+    // Pre-fill expiry date with +30 days
+    const defaultExpiry = new Date();
+    defaultExpiry.setDate(defaultExpiry.getDate() + 30);
+    setExpiryDate(defaultExpiry.toISOString().split('T')[0]);
   }, []);
+
+  const handleValueChange = (val: string) => {
+    setBonusValue(val);
+    if (val && !code) {
+      setCode(generateSafeCode());
+    }
+  };
 
   const fetchBonusCodes = async () => {
     setLoading(true);
@@ -88,7 +117,7 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
 
         setCode('');
         setBonusValue('');
-        setExpiryDate('');
+        // Keep the expiry date for next use
         showToast(`Código ${data.codigo_presente} registrado com sucesso!`, 'success');
       }
     } catch (err: any) {
@@ -153,7 +182,18 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
 
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Identificador Único</label>
+                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Valor (Kz)</label>
+                  <input
+                    type="number"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:bg-white/20 focus:border-white/40 outline-none font-bold text-white placeholder:text-indigo-300/50 transition-all"
+                    placeholder="0.00"
+                    value={bonusValue}
+                    onChange={(e) => handleValueChange(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Código Promocional</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -167,18 +207,7 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Valor (Kz)</label>
-                  <input
-                    type="number"
-                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:bg-white/20 focus:border-white/40 outline-none font-bold text-white placeholder:text-indigo-300/50 transition-all"
-                    placeholder="0.00"
-                    value={bonusValue}
-                    onChange={(e) => setBonusValue(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Expira em</label>
+                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Data de Expiração</label>
                   <input
                     type="date"
                     className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:bg-white/20 focus:border-white/40 outline-none font-bold text-white/90 placeholder:text-indigo-300/50 transition-all [color-scheme:dark]"

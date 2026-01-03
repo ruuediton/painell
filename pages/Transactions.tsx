@@ -558,139 +558,142 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         </div>
 
         {/* HISTORY COLUMN */}
-        <div className="xl:col-span-7 space-y-6 md:space-y-8">
-          <div className="bg-white rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-6 md:p-10 border-b border-slate-100 space-y-6 md:space-y-8">
+        <div className="xl:col-span-7">
+          <div className="bg-white rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full min-h-[600px]">
+            <div className="p-6 md:p-10 border-b border-slate-100 space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div>
                   <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase">Fluxo Recente</h3>
                   <p className="text-slate-400 font-medium text-xs md:text-sm">Últimas 20 transações em tempo real.</p>
                 </div>
 
-                <div className="flex bg-slate-100 p-1.5 rounded-[1.25rem] border border-slate-200/50">
-                  <button
-                    onClick={() => setHistoryFilter('all')}
-                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyFilter === 'all' ? 'bg-white shadow-lg shadow-black/5 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Tudo
-                  </button>
-                  <button
-                    onClick={() => setHistoryFilter(successTerm)}
-                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyFilter === successTerm ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    {successLabel}
-                  </button>
-                  <button
-                    onClick={() => setHistoryFilter('rejeitado')}
-                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyFilter === 'rejeitado' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Rejeitados
-                  </button>
+                <div className="flex bg-slate-100 p-1.5 rounded-[1.25rem] border border-slate-200/50 overflow-x-auto max-w-full">
+                  {[
+                    { id: 'all', label: 'Tudo' },
+                    { id: 'pendente', label: 'Pendente' },
+                    { id: successTerm, label: successLabel },
+                    { id: 'rejeitado', label: 'Falhou' }
+                  ].map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setHistoryFilter(filter.id)}
+                      className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${historyFilter === filter.id ? (filter.id === successTerm ? 'bg-emerald-500 text-white' : filter.id === 'rejeitado' ? 'bg-rose-500 text-white' : 'bg-white shadow-lg text-slate-900') : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100">Beneficiário</th>
-                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100">Montante</th>
-                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 text-right">Data/Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {recentTransactions.length === 0 ? (
-                    Array(5).fill(0).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td className="p-8"><div className="h-10 bg-slate-100 rounded-2xl w-40"></div></td>
-                        <td className="p-8"><div className="h-6 bg-slate-50 rounded-xl w-24"></div></td>
-                        <td className="p-8"><div className="h-8 bg-slate-100 rounded-xl w-32 ml-auto"></div></td>
-                      </tr>
-                    ))
-                  ) : recentTransactions.map((t) => (
-                    <tr key={t.id} className="group hover:bg-slate-50/50 transition-all duration-300">
-                      <td className="p-8">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${t.status === TransactionStatus.RECHARGED ? 'bg-emerald-50 text-emerald-600' : t.status === TransactionStatus.REJECTED ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-400'}`}>
-                            {t.userName.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-black text-slate-900 group-hover:text-sky-600 transition-colors uppercase tracking-tight">{t.userName}</p>
-                            <p className="text-xs font-bold text-slate-400">{t.userPhone}</p>
-                          </div>
+            <div className="flex-1 p-6 md:p-10">
+              <div className="grid gap-4">
+                {loading && recentTransactions.length === 0 ? (
+                  Array(5).fill(0).map((_, i) => (
+                    <div key={i} className="h-24 bg-slate-50 rounded-3xl animate-pulse border border-slate-100"></div>
+                  ))
+                ) : recentTransactions.length === 0 ? (
+                  <div className="py-20 text-center space-y-6">
+                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200 border-2 border-dashed border-slate-100">
+                      <Icons.History />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">Sem atividades recentes</h4>
+                      <p className="text-slate-400 font-medium text-sm max-w-xs mx-auto">Não encontramos registros para o filtro selecionado no momento.</p>
+                    </div>
+                  </div>
+                ) : (
+                  recentTransactions.map((tx) => (
+                    <div
+                      key={tx.id}
+                      onClick={() => { setPhone(tx.userPhone); handleSearch(); }}
+                      className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-sky-100 transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-5">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl shadow-inner ${tx.status === TransactionStatus.RECHARGED ? 'bg-emerald-50 text-emerald-500' : tx.status === TransactionStatus.REJECTED ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-500'}`}>
+                          {tx.type === 'DEPOSIT' ? '💰' : '💸'}
                         </div>
-                      </td>
-                      <td className="p-8 font-black text-slate-900 text-lg">
-                        Kz {t.amount.toLocaleString('pt-BR')}
-                      </td>
-                      <td className="p-8 text-right space-y-2">
-                        <div className="flex justify-end">
-                          <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-tighter ${t.status === TransactionStatus.RECHARGED ? 'bg-emerald-100 text-emerald-600' : t.status === TransactionStatus.REJECTED ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
-                            {t.status === TransactionStatus.RECHARGED ? successLabel : t.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
+                        <div>
+                          <h4 className="text-base font-black text-slate-900 group-hover:text-sky-600 transition-colors uppercase leading-tight">
+                            {tx.userName}
+                          </h4>
+                          <p className="text-xs font-bold text-slate-400 mt-0.5 font-mono">{tx.userPhone}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        <div className="text-right hidden sm:block">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Valor</p>
+                          <p className={`text-lg font-black ${tx.status === TransactionStatus.RECHARGED ? 'text-emerald-500' : tx.status === TransactionStatus.REJECTED ? 'text-rose-500' : 'text-amber-500'}`}>
+                            Kz {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1.5 min-w-[100px]">
+                          <span className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg tracking-widest ${tx.status === TransactionStatus.RECHARGED ? 'bg-emerald-50 text-emerald-600' : tx.status === TransactionStatus.REJECTED ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {tx.status}
                           </span>
+                          <span className="text-[10px] font-bold text-slate-300 font-mono italic">{tx.date}</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t.date}</p>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
             <div className="p-8 bg-slate-50/50 border-t border-slate-100 text-center">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fim da lista de auditoria</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Base de Dados Sincronizada em Produção</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* STATUS SELECTION MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-            <div className="p-10 text-center bg-slate-900 text-white relative">
-              <div className="absolute top-0 right-0 p-4 opacity-20"><Icons.Dashboard /></div>
-              <h3 className="font-black uppercase text-xs tracking-[0.3em] mb-2">Auditoria deeBank</h3>
-              <p className="text-slate-400 text-sm font-medium">Defina o estado final da transação para liberação de fundos.</p>
-            </div>
+        {/* STATUS SELECTION MODAL */}
+        {showModal && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+              <div className="p-10 text-center bg-slate-900 text-white relative">
+                <div className="absolute top-0 right-0 p-4 opacity-20"><Icons.Dashboard /></div>
+                <h3 className="font-black uppercase text-xs tracking-[0.3em] mb-2">Auditoria deeBank</h3>
+                <p className="text-slate-400 text-sm font-medium">Defina o estado final da transação para liberação de fundos.</p>
+              </div>
 
-            <div className="p-8 space-y-3 bg-slate-50/30">
-              {[
-                { id: successTerm, label: successLabel, color: 'emerald', icon: '✅' },
-                { id: 'rejeitado', label: 'Rejeitado', color: 'rose', icon: '❌' },
-                { id: 'pendente', label: 'Pendente', color: 'amber', icon: '⏳' }
-              ].map((status) => (
+              <div className="p-8 space-y-3 bg-slate-50/30">
+                {[
+                  { id: successTerm, label: successLabel, color: 'emerald', icon: '✅' },
+                  { id: 'rejeitado', label: 'Rejeitado', color: 'rose', icon: '❌' },
+                  { id: 'pendente', label: 'Pendente', color: 'amber', icon: '⏳' }
+                ].map((status) => (
+                  <button
+                    key={status.id}
+                    onClick={() => {
+                      setSelectedStatus(status.id);
+                      setShowModal(false);
+                    }}
+                    className={`w-full py-5 px-6 bg-white hover:bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-${status.color}-200 flex items-center justify-between group transition-all duration-300 active:scale-95`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-xl">{status.icon}</span>
+                      <span className="text-xs font-black uppercase tracking-widest text-slate-600 group-hover:text-slate-900">
+                        {status.label}
+                      </span>
+                    </div>
+                    <div className={`w-2 h-2 rounded-full transform group-hover:scale-150 transition-transform ${status.id === successTerm ? 'bg-emerald-500' : status.id === 'rejeitado' ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-6 bg-white flex justify-center border-t border-slate-100">
                 <button
-                  key={status.id}
-                  onClick={() => {
-                    setSelectedStatus(status.id);
-                    setShowModal(false);
-                  }}
-                  className={`w-full py-5 px-6 bg-white hover:bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-${status.color}-200 flex items-center justify-between group transition-all duration-300 active:scale-95`}
+                  onClick={() => setShowModal(false)}
+                  className="text-[10px] font-black text-slate-300 hover:text-slate-500 uppercase tracking-[0.3em] transition-colors"
                 >
-                  <div className="flex items-center gap-4">
-                    <span className="text-xl">{status.icon}</span>
-                    <span className={`text-xs font-black uppercase tracking-widest text-slate-600 group-hover:text-${status.color}-600`}>
-                      {status.label}
-                    </span>
-                  </div>
-                  <div className={`w-2 h-2 rounded-full bg-${status.color}-500 transform group-hover:scale-150 transition-transform`}></div>
+                  Descartar Ação
                 </button>
-              ))}
-            </div>
-
-            <div className="p-6 bg-white flex justify-center border-t border-slate-100">
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-[10px] font-black text-slate-300 hover:text-slate-500 uppercase tracking-[0.3em] transition-colors"
-              >
-                Descartar Ação
-              </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
