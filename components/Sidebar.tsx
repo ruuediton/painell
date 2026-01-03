@@ -6,9 +6,10 @@ interface SidebarProps {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
   adminEmail?: string;
+  isAdminMaster?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEmail }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEmail, isAdminMaster }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
     { id: 'users', label: 'Usuários', icon: Icons.Users },
@@ -68,11 +69,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEma
               <Icons.Dashboard />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-sky-400 uppercase tracking-[0.2em]">Versão Pro</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-black text-sky-400 uppercase tracking-[0.2em]">Versão Pro</p>
+                {isAdminMaster && (
+                  <span className="bg-sky-500 text-white text-[7px] font-black px-1 rounded-sm animate-pulse">MASTER</span>
+                )}
+              </div>
               <p className="text-[10px] font-bold text-slate-300 truncate">{adminEmail || 'DeepAdmin Console'}</p>
             </div>
           </div>
-          <p className="text-[9px] text-slate-500 font-medium px-1 mb-3">Painel de Administração de Alta Performance</p>
+          <p className="text-[9px] text-slate-500 font-medium px-1 mb-3">Painel de Administração Master</p>
           <button className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
             <Icons.Logs />
             Documentação

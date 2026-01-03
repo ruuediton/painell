@@ -8,9 +8,10 @@ interface UserDetailProps {
   user: User;
   onBack: () => void;
   onLogAction: (action: string, details: string) => void;
+  isAdminMaster?: boolean;
 }
 
-const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) => {
+const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction, isAdminMaster }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'financial' | 'products'>('financial');
   const [details, setDetails] = useState<User>(user);
   const [transactions, setTransactions] = useState<Transaction[]>([]);

@@ -10,9 +10,10 @@ import { supabase } from '../services/supabase';
 
 interface DashboardProps {
   setCurrentPage: (page: Page) => void;
+  isAdminMaster?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage, isAdminMaster }) => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     withdrawalsToday: 0,
@@ -54,13 +55,15 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
 
       const userDiff = (totalUsers || 0) - (usersYesterday || 0);
 
-      // 2. VIP Users & Trend
+      // 2. VIP Users & Trend (Criteria: purchase >= 9000)
       const { data: vips } = await supabase
         .from('user_purchases')
-        .select('user_id, purchase_date');
+        .select('user_id, purchase_date, products(price)');
 
-      const uniqueVips = new Set(vips?.map(v => v.user_id)).size;
-      const vipsYesterday = new Set(vips?.filter(v => new Date(v.purchase_date) < startOfToday).map(v => v.user_id)).size;
+      // Filter vips correctly based on product price >= 9000
+      const vipUsersList = vips?.filter((v: any) => v.products?.price >= 9000) || [];
+      const uniqueVips = new Set(vipUsersList.map(v => v.user_id)).size;
+      const vipsYesterday = new Set(vipUsersList.filter(v => new Date(v.purchase_date) < startOfToday).map(v => v.user_id)).size;
       const vipDiff = uniqueVips - vipsYesterday;
 
       // 3. Withdrawals Today
@@ -180,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
               onClick={() => setCurrentPage('users')}
             />
             <StatCard
-              title="Usuários VIP"
+              title="Investidores VIP"
               value={stats.totalVipUsers}
               icon={<Icons.Bonus />}
               trend={{ value: `${stats.vipTrend > 0 ? '+' : ''}${stats.vipTrend} desde ontem`, positive: stats.vipTrend >= 0 }}

@@ -6,9 +6,10 @@ import { showToast } from '../components/Toast';
 
 interface BonusProps {
   onLogAction: (action: string, details: string) => void;
+  isAdminMaster?: boolean;
 }
 
-const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
+const Bonus: React.FC<BonusProps> = ({ onLogAction, isAdminMaster }) => {
   const [code, setCode] = useState('');
   const [bonusValue, setBonusValue] = useState('');
   const [expiryDate, setExpiryDate] = useState('');

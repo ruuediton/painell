@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [logs, setLogs] = useState<AuditLog[]>(MOCK_LOGS);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isAdminMaster = session?.user?.email === 'admindeebank@gmail.com';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -86,18 +87,19 @@ const App: React.FC = () => {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'dashboard': return <Dashboard setCurrentPage={setCurrentPage} />;
-      case 'users': return <Users onSelectUser={navigateToUserDetail} />;
+      case 'dashboard': return <Dashboard setCurrentPage={setCurrentPage} isAdminMaster={isAdminMaster} />;
+      case 'users': return <Users onSelectUser={navigateToUserDetail} isAdminMaster={isAdminMaster} />;
       case 'user-detail': return selectedUser ? (
         <UserDetail
           user={selectedUser}
           onBack={() => setCurrentPage('users')}
           onLogAction={addLogAction}
+          isAdminMaster={isAdminMaster}
         />
-      ) : <Users onSelectUser={navigateToUserDetail} />;
-      case 'deposits': return <Transactions type="DEPOSIT" onLogAction={addLogAction} />;
-      case 'withdrawals': return <Transactions type="WITHDRAWAL" onLogAction={addLogAction} />;
-      case 'bonus': return <Bonus onLogAction={addLogAction} />;
+      ) : <Users onSelectUser={navigateToUserDetail} isAdminMaster={isAdminMaster} />;
+      case 'deposits': return <Transactions type="DEPOSIT" onLogAction={addLogAction} isAdminMaster={isAdminMaster} />;
+      case 'withdrawals': return <Transactions type="WITHDRAWAL" onLogAction={addLogAction} isAdminMaster={isAdminMaster} />;
+      case 'bonus': return <Bonus onLogAction={addLogAction} isAdminMaster={isAdminMaster} />;
       case 'logs': return <Logs customLogs={logs} />;
       case 'suporte': return <Suporte />;
       case 'settings': return <Dados />;
@@ -114,6 +116,7 @@ const App: React.FC = () => {
           currentPage={currentPage}
           setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }}
           adminEmail={session?.user?.email}
+          isAdminMaster={isAdminMaster}
         />
       </div>
 
@@ -131,6 +134,7 @@ const App: React.FC = () => {
               currentPage={currentPage}
               setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }}
               adminEmail={session?.user?.email}
+              isAdminMaster={isAdminMaster}
             />
           </div>
         </div>
@@ -166,9 +170,16 @@ const App: React.FC = () => {
           <div className="flex items-center space-x-3 md:space-x-6">
             <div className="flex items-center space-x-3 md:space-x-4 pr-3 md:pr-6 border-r border-slate-200">
               <div className="text-right hidden xs:block">
-                <p className="text-[10px] md:text-xs font-black text-slate-900 uppercase tracking-wide">
-                  {session?.user?.email?.split('@')[0] || 'Admin'}
-                </p>
+                <div className="flex items-center justify-end space-x-2">
+                  {isAdminMaster && (
+                    <span className="bg-gradient-to-r from-sky-400 to-indigo-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-lg shadow-sky-500/20 animate-pulse border border-sky-300/30">
+                      MASTER ADMIN
+                    </span>
+                  )}
+                  <p className="text-[10px] md:text-xs font-black text-slate-900 uppercase tracking-wide">
+                    {session?.user?.email?.split('@')[0] || 'Admin'}
+                  </p>
+                </div>
                 <div className="flex items-center justify-end space-x-1">
                   <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${is2FAEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
                   <p className="text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest whitespace-nowrap">

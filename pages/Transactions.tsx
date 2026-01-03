@@ -15,9 +15,10 @@ interface ExtendedTransaction extends Transaction {
 interface TransactionsProps {
   type: 'DEPOSIT' | 'WITHDRAWAL';
   onLogAction: (action: string, details: string) => void;
+  isAdminMaster?: boolean;
 }
 
-const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
+const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction, isAdminMaster }) => {
   // Determine specific terms for this transaction type
   const successTerm = type === 'DEPOSIT' ? 'recarregado' : 'aprovado';
   const successLabel = type === 'DEPOSIT' ? 'Recarregado' : 'Aprovado';

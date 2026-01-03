@@ -6,9 +6,10 @@ import { showToast } from '../components/Toast';
 
 interface UsersProps {
   onSelectUser: (user: User) => void;
+  isAdminMaster?: boolean;
 }
 
-const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
+const Users: React.FC<UsersProps> = ({ onSelectUser, isAdminMaster }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
