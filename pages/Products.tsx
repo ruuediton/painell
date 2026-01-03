@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { Icons } from '../constants';
+import { showToast } from '../components/Toast';
 // Removed unused ProductStatus import
 
 interface ProductDB {
@@ -26,6 +27,7 @@ const Products: React.FC = () => {
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Partial<ProductDB>>({});
 
   useEffect(() => {
@@ -48,6 +50,7 @@ const Products: React.FC = () => {
   };
 
   const handleSave = async () => {
+    setIsSubmitting(true);
     try {
       const productData = {
         name: currentProduct.name,
@@ -78,9 +81,11 @@ const Products: React.FC = () => {
       setShowModal(false);
       setCurrentProduct({});
       fetchProducts();
-      alert(isEditing ? 'Produto atualizado!' : 'Produto criado!');
+      showToast(isEditing ? 'Produto atualizado!' : 'Produto criado!', 'success');
     } catch (err: any) {
-      alert('Erro ao salvar: ' + err.message);
+      showToast('Erro ao salvar: ' + err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -91,8 +96,9 @@ const Products: React.FC = () => {
         const { error } = await supabase.from('products').delete().eq('id', id);
         if (error) throw error;
         fetchProducts();
+        showToast('Produto deletado com sucesso!', 'success');
       } catch (err: any) {
-        alert('Erro ao deletar: ' + err.message);
+        showToast('Erro ao deletar: ' + err.message, 'error');
       }
     }
   };
@@ -302,8 +308,8 @@ const Products: React.FC = () => {
 
             <div className="flex gap-4">
               <button onClick={() => setShowModal(false)} className="flex-1 py-4 text-slate-500 font-bold uppercase text-xs hover:bg-slate-50 rounded-xl transition-all">Cancelar</button>
-              <button onClick={handleSave} className="flex-1 py-4 bg-sky-600 text-white font-black uppercase text-xs rounded-xl hover:bg-sky-700 shadow-xl shadow-sky-600/20 active:scale-95 transition-all">
-                {isEditing ? 'Salvar Alterações' : 'Criar Produto'}
+              <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-4 bg-sky-600 text-white font-black uppercase text-xs rounded-xl hover:bg-sky-700 shadow-xl shadow-sky-600/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                {isSubmitting ? (isEditing ? 'Salvando...' : 'Criando...') : (isEditing ? 'Salvar Alterações' : 'Criar Produto')}
               </button>
             </div>
           </div>

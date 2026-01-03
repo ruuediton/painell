@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { TransactionStatus, Transaction } from '../types';
 import { Icons } from '../constants';
+import { jsPDF } from 'jspdf';
 
 interface ExtendedTransaction extends Transaction {
   bankName?: string;
@@ -240,6 +241,49 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
     alert('Copiado para a área de transferência!');
   };
 
+  const generatePDF = (tx: ExtendedTransaction) => {
+    const doc = new jsPDF();
+    const title = type === 'DEPOSIT' ? 'RECEIPT OF DEPOSIT' : 'RECEIPT OF WITHDRAWAL';
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text(title, 105, 20, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+
+    let y = 40;
+    const lineHeight = 10;
+
+    const addLine = (label: string, value: string) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(label, 20, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(value, 80, y);
+      y += lineHeight;
+    };
+
+    addLine("Transaction ID:", tx.id);
+    addLine("Date:", new Date(tx.date).toLocaleString());
+    addLine("User Name:", tx.userName || "N/A");
+    addLine("Phone:", tx.userPhone || "N/A");
+    addLine("Amount:", `Kz ${tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+    addLine("Status:", tx.status);
+
+    if (tx.bankName) addLine("Bank:", tx.bankName);
+    if (tx.iban) addLine("IBAN:", tx.iban);
+    if (tx.netValue) addLine("Net Value:", `Kz ${tx.netValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+
+    doc.setLineWidth(0.5);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    doc.setFontSize(10);
+    doc.text("deeBank System Audit Log", 105, y, { align: 'center' });
+
+    doc.save(`transaction_${tx.id}.pdf`);
+  };
+
   return (
     <div className="space-y-10 animate-fade-in-up pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -405,6 +449,12 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
                         </div>
                       </>
                     )}
+                    <button
+                      onClick={() => generatePDF(pendingTx)}
+                      className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all mt-4"
+                    >
+                      Baixar Comprovante PDF
+                    </button>
                   </div>
                 ) : (
                   <div className="bg-sky-500/10 border border-sky-500/20 p-6 rounded-3xl text-center">

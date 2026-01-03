@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { BonusCode } from '../types';
 import { Icons } from '../constants';
+import { showToast } from '../components/Toast';
 
 interface BonusProps {
   onLogAction: (action: string, details: string) => void;
@@ -86,10 +87,10 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
         setCode('');
         setBonusValue('');
         setExpiryDate('');
-        alert(`Código ${data.codigo_presente} registrado com sucesso!`);
+        showToast(`Código ${data.codigo_presente} registrado com sucesso!`, 'success');
       }
     } catch (err: any) {
-      alert('Erro ao criar bônus: ' + err.message);
+      showToast('Erro ao criar bônus: ' + err.message, 'error');
     }
   };
 
@@ -112,13 +113,13 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
           `Admin removeu o código ${codeToDelete.code} da plataforma.`
         );
       } catch (err: any) {
-        alert('Erro ao deletar: ' + err.message);
+        showToast('Erro ao deletar: ' + err.message, 'error');
       }
     }
   };
 
   return (
-    <div className="space-y-12 animate-fade-in-up pb-20">
+    <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Bônus & Recompensas</h2>
@@ -126,106 +127,126 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: Creator - Modern Glassmorphism Style */}
         <div className="lg:col-span-5">
-          <div className="premium-card p-10 space-y-8 h-fit lg:sticky lg:top-24">
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-black text-sky-500 uppercase tracking-[0.2em]">Gerador</h4>
-              <p className="text-2xl font-black text-slate-900">Novo Código</p>
+          <div className="relative p-10 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-500/20 group h-fit lg:sticky lg:top-24">
+            {/* Dynamic Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 transition-all duration-500 group-hover:scale-105"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+
+            <div className="relative z-10 space-y-8 text-white">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md border border-white/20">
+                    <Icons.Bonus />
+                  </div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">Gerador Premium</h4>
+                </div>
+                <p className="text-3xl font-black tracking-tight">Novo Código</p>
+                <p className="text-indigo-100 text-sm font-medium opacity-80">Configure os parâmetros da nova recompensa.</p>
+              </div>
+
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Identificador Único</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="w-full pl-12 pr-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:bg-white/20 focus:border-white/40 outline-none uppercase font-mono font-bold text-white placeholder:text-indigo-300/50 transition-all"
+                      placeholder="EX: WELCOME2024"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                    />
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300">#</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Valor (Kz)</label>
+                  <input
+                    type="number"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:bg-white/20 focus:border-white/40 outline-none font-bold text-white placeholder:text-indigo-300/50 transition-all"
+                    placeholder="0.00"
+                    value={bonusValue}
+                    onChange={(e) => setBonusValue(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Expira em</label>
+                  <input
+                    type="date"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:bg-white/20 focus:border-white/40 outline-none font-bold text-white/90 placeholder:text-indigo-300/50 transition-all [color-scheme:dark]"
+                    value={expiryDate}
+                    onChange={(e) => setExpiryDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleAddCode}
+                className="w-full py-5 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg shadow-black/20 active:scale-95 flex items-center justify-center gap-2"
+              >
+                <span>Criar Recompensa</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+              </button>
             </div>
-
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identificador</label>
-                <input
-                  type="text"
-                  className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none uppercase font-mono font-bold text-slate-900"
-                  placeholder="EX: VERÃO2024"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Bônus (Kz)</label>
-                <input
-                  type="number"
-                  className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none font-bold text-slate-900"
-                  placeholder="0.00"
-                  value={bonusValue}
-                  onChange={(e) => setBonusValue(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data de Expiração</label>
-                <input
-                  type="date"
-                  className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none font-bold text-slate-900"
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={handleAddCode}
-              className="w-full py-5 btn-primary font-black text-xs uppercase tracking-widest"
-            >
-              Registrar Código
-            </button>
           </div>
         </div>
 
-        <div className="lg:col-span-7">
-          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">Códigos Ativos</h3>
-              <div className="badge badge-blue">{bonusCodes.length} ativos</div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="premium-table">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th className="text-right">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={4} className="p-10 text-center">Carregando...</td></tr>
-                  ) : bonusCodes.map((item) => (
-                    <tr key={item.id} className="group">
-                      <td>
-                        <span className="font-mono font-black text-sky-600 bg-sky-50 px-3 py-1.5 rounded-xl border border-sky-100 group-hover:bg-sky-500 group-hover:text-white transition-all">
-                          {item.code}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="font-black text-emerald-600">Kz {item.value.toLocaleString('pt-BR')}</span>
-                      </td>
-                      <td>
-                        <span className="text-xs font-bold text-slate-400">{new Date(item.expiryDate).toLocaleDateString()}</span>
-                      </td>
-                      <td className="text-right">
-                        <button
-                          onClick={() => handleDeleteCode(item.id)}
-                          className="p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all"
-                        >
-                          <Icons.Trash />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!loading && bonusCodes.length === 0 && (
-              <div className="p-20 text-center">
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum bônus configurado</p>
+        {/* Right Column: List - Clean & Airy */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="font-black text-slate-400 uppercase text-xs tracking-widest">Códigos Ativos ({bonusCodes.length})</h3>
+          </div>
+
+          <div className="grid gap-4">
+            {loading ? (
+              <div className="p-20 text-center text-slate-400 font-bold animate-pulse">Carregando códigos...</div>
+            ) : bonusCodes.length === 0 ? (
+              <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-12 text-center">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                  <Icons.Bonus />
+                </div>
+                <p className="text-slate-500 font-bold">Nenhum código ativo no momento.</p>
+                <p className="text-slate-400 text-sm mt-1">Crie o primeiro para começar.</p>
               </div>
+            ) : (
+              bonusCodes.map((item) => (
+                <div key={item.id} className="group bg-white p-5 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                      <span className="text-2xl">🎁</span>
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-black text-slate-900 font-mono tracking-tight group-hover:text-indigo-600 transition-colors uppercase">
+                        {item.code}
+                      </h4>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          Expira: {new Date(item.expiryDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor</p>
+                      <p className="text-xl font-black text-emerald-500">Kz {item.value.toLocaleString('pt-BR')}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteCode(item.id)}
+                      className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 flex items-center justify-center transition-all active:scale-95"
+                      title="Deletar Código"
+                    >
+                      <Icons.Trash />
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>

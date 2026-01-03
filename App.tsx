@@ -6,11 +6,12 @@ import Users from './pages/Users';
 import UserDetail from './pages/UserDetail';
 import Transactions from './pages/Transactions';
 import Bonus from './pages/Bonus';
-import Logs from './pages/Logs';
-import Settings from './pages/Settings';
+import Suporte from './pages/Suporte';
+import Dados from './pages/Dados';
 import Login from './pages/Login';
 import TwoFactorGate from './pages/TwoFactorGate';
 import Products from './pages/Products';
+import { ToastContainer } from './components/Toast';
 import { Page, User, AuditLog } from './types';
 import { MOCK_LOGS } from './services/mockData';
 import { supabase } from './services/supabase';
@@ -95,14 +96,8 @@ const App: React.FC = () => {
       case 'deposits': return <Transactions type="DEPOSIT" onLogAction={addLogAction} />;
       case 'withdrawals': return <Transactions type="WITHDRAWAL" onLogAction={addLogAction} />;
       case 'bonus': return <Bonus onLogAction={addLogAction} />;
-      case 'logs': return <Logs customLogs={logs} />;
-      case 'settings': return (
-        <Settings
-          is2FAEnabled={is2FAEnabled}
-          onToggle2FA={() => setIs2FAEnabled(!is2FAEnabled)}
-          onLogAction={addLogAction}
-        />
-      );
+      case 'logs': return <Suporte />;
+      case 'settings': return <Dados />;
       case 'products': return <Products />;
       default: return <Dashboard setCurrentPage={setCurrentPage} />;
     }
@@ -172,6 +167,7 @@ const App: React.FC = () => {
       <div className="lg:hidden">
         <BottomNavbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
       </div>
+      <ToastContainer />
     </div>
   );
 };

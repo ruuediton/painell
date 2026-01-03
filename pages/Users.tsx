@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { User, UserStatus } from '../types';
 import { Icons } from '../constants';
+import { showToast } from '../components/Toast';
 
 interface UsersProps {
   onSelectUser: (user: User) => void;
@@ -84,7 +85,10 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
     const newIncomeStr = prompt('Nova renda diária (Kz):');
     if (newIncomeStr === null) return;
     const newIncome = Number(newIncomeStr);
-    if (isNaN(newIncome)) return alert('Valor inválido');
+    if (isNaN(newIncome)) {
+      showToast('Valor inválido', 'error');
+      return;
+    }
     const updated = selectedUserProducts.map(p =>
       p.id === productId ? { ...p, daily_income: newIncome } : p
     );

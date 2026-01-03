@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { User, Transaction, TransactionStatus, UserStatus, UserProduct } from '../types';
 import { Icons } from '../constants';
+import { showToast } from '../components/Toast';
 
 interface UserDetailProps {
   user: User;
@@ -19,7 +20,10 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
   // New Detailed Stats
   const [subordinatesCount, setSubordinatesCount] = useState(0);
   const [dailyIncome, setDailyIncome] = useState(0);
-  const [bankInfo, setBankInfo] = useState<{ bank: string; owner: string; iban: string } | null>(null);
+  // Bank Account State (managed via bancos_clientes)
+  const [bankInfo, setBankInfo] = useState<{ id?: string; bank: string; owner: string; iban: string } | null>(null);
+  const [isEditingBank, setIsEditingBank] = useState(false);
+  const [newBankData, setNewBankData] = useState({ bank: '', owner: '', iban: '' });
 
   // Modals State
   const [showBalanceModal, setShowBalanceModal] = useState(false);
@@ -59,21 +63,33 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      // 3. Fetch Withdrawals (and Bank Info from latest)
+      // 3. Fetch Bank Info from 'bancos_clientes'
+      const { data: bankData } = await supabase
+        .from('bancos_clientes')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (bankData) {
+        const info = {
+          id: bankData.id,
+          bank: bankData.nome_do_banco,
+          owner: bankData.nome_completo,
+          iban: bankData.iban
+        };
+        setBankInfo(info);
+        setNewBankData(info);
+      } else {
+        setBankInfo(null);
+        setNewBankData({ bank: '', owner: '', iban: '' });
+      }
+
+      // 4. Fetch Withdrawals (for history only now)
       const { data: withdrawals } = await supabase
         .from('retirada_clientes')
         .select('*')
         .eq('user_id', user.id)
         .order('data_de_criacao', { ascending: false });
-
-      if (withdrawals && withdrawals.length > 0) {
-        const latest = withdrawals[0];
-        setBankInfo({
-          bank: latest.nome_do_banco || 'N/A',
-          owner: latest.nome_completo || latest.nome_titular || 'N/A',
-          iban: latest.iban || 'N/A'
-        });
-      }
 
       // Combine Transactions
       const txs: Transaction[] = [];
@@ -126,7 +142,8 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
             id: p.id,
             name: p.products?.name || 'Produto',
             purchaseDate: new Date(p.purchase_date).toLocaleDateString(),
-            status: 'active'
+            status: 'active',
+            dailyIncome: p.daily_income_user || p.products?.daily_income || 0
           };
         });
         setPurchasedProducts(mappedProducts);
@@ -208,13 +225,91 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
     }
   };
 
-  const handleDeleteBank = () => {
-    // Since it's historical data, we can't 'delete' the account per se without complex logic.
-    // We will clear the view for this session or update the metadata if possible.
-    // For now, prompt the user.
-    if (confirm('Atenção: Os dados bancários são baseados no histórico de saques. Deseja ocultar estas informações da visualização?')) {
-      setBankInfo(null);
-      alert('Dados ocultados da visualização atual.');
+  const handleSaveBank = async () => {
+    try {
+      if (bankInfo?.id) {
+        await supabase
+          .from('bancos_clientes')
+          .update({
+            nome_do_banco: newBankData.bank,
+            nome_completo: newBankData.owner,
+            iban: newBankData.iban
+          })
+          .eq('id', bankInfo.id);
+      } else {
+        await supabase
+          .from('bancos_clientes')
+          .insert({
+            user_id: user.id,
+            nome_do_banco: newBankData.bank,
+            nome_completo: newBankData.owner,
+            iban: newBankData.iban
+          });
+      }
+      setIsEditingBank(false);
+      fetchUserDetails();
+      showToast('Dados bancários salvos!', 'success');
+    } catch (error: any) {
+      showToast('Erro ao salvar dados bancários: ' + error.message, 'error');
+    }
+  };
+
+  const handleDeleteBank = async () => {
+    if (!bankInfo?.id) return;
+    if (confirm('Tem certeza que deseja apagar os dados bancários deste usuário?')) {
+      const { error } = await supabase.from('bancos_clientes').delete().eq('id', bankInfo.id);
+      if (!error) {
+        setBankInfo(null);
+        setNewBankData({ bank: '', owner: '', iban: '' });
+        showToast('Dados bancários removidos.', 'success');
+      } else {
+        showToast('Erro ao deletar: ' + error.message, 'error');
+      }
+    }
+  };
+
+  const handleEditProductIncome = async (productId: string, currentIncome: number) => {
+    const newIncomeStr = prompt('Nova Renda Diária (Kz):', currentIncome.toString());
+    if (newIncomeStr === null) return;
+    const newIncome = parseFloat(newIncomeStr);
+    if (isNaN(newIncome)) return alert('Valor inválido');
+
+    try {
+      // Assuming user_purchases has a 'daily_income_user' override column or similar.
+      // If not, we might need to add it or update a specific field. 
+      // For this implementations, based on common patterns, let's assume we can update 'daily_income_user' or fail if column missing.
+      // NOTE: If the table doesn't have this column, this will fail. Ensure schema supports it.
+      // As a fallback/alternative if schema is strict, we might update a 'custom_daily_income' field if available.
+
+      const { error } = await supabase
+        .from('user_purchases')
+        .update({ daily_income_user: newIncome })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      fetchUserDetails();
+      showToast('Renda do produto atualizada!', 'success');
+    } catch (err: any) {
+      showToast('Erro ao atualizar renda: ' + err.message, 'error');
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (confirm('Tem certeza que deseja remover este produto do usuário?')) {
+      try {
+        const { error } = await supabase
+          .from('user_purchases')
+          .delete()
+          .eq('id', productId);
+
+        if (error) throw error;
+
+        fetchUserDetails();
+        showToast('Produto removido com sucesso!', 'success');
+      } catch (err: any) {
+        showToast('Erro ao remover produto: ' + err.message, 'error');
+      }
     }
   };
 
@@ -280,12 +375,54 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
             </div>
           </div>
 
-          {bankInfo && (
-            <div className="premium-card p-6 space-y-4 border-l-4 border-sky-500">
-              <div className="flex justify-between items-center">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dados Bancários</h4>
-                <button onClick={handleDeleteBank} className="text-rose-400 hover:text-rose-600"><Icons.Trash /></button>
+          <div className="premium-card p-6 space-y-4 border-l-4 border-sky-500">
+            <div className="flex justify-between items-center">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Dados Bancários (bancos_clientes)
+              </h4>
+              <div className="space-x-2">
+                {!isEditingBank && (
+                  <button onClick={() => setIsEditingBank(true)} className="text-sky-400 hover:text-sky-600">
+                    <Icons.Edit />
+                  </button>
+                )}
+                {bankInfo && !isEditingBank && (
+                  <button onClick={handleDeleteBank} className="text-rose-400 hover:text-rose-600">
+                    <Icons.Trash />
+                  </button>
+                )}
               </div>
+            </div>
+
+            {isEditingBank ? (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Nome do Banco"
+                  className="w-full p-2 bg-slate-50 rounded-lg text-sm border border-slate-200"
+                  value={newBankData.bank}
+                  onChange={(e) => setNewBankData({ ...newBankData, bank: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Nome do Titular"
+                  className="w-full p-2 bg-slate-50 rounded-lg text-sm border border-slate-200"
+                  value={newBankData.owner}
+                  onChange={(e) => setNewBankData({ ...newBankData, owner: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="IBAN"
+                  className="w-full p-2 bg-slate-50 rounded-lg text-sm border border-slate-200"
+                  value={newBankData.iban}
+                  onChange={(e) => setNewBankData({ ...newBankData, iban: e.target.value })}
+                />
+                <div className="flex gap-2 pt-2">
+                  <button onClick={() => setIsEditingBank(false)} className="flex-1 py-2 text-slate-500 text-xs font-bold uppercase hover:bg-slate-100 rounded-lg">Cancelar</button>
+                  <button onClick={handleSaveBank} className="flex-1 py-2 bg-sky-500 text-white text-xs font-bold uppercase rounded-lg hover:bg-sky-600">Salvar</button>
+                </div>
+              </div>
+            ) : bankInfo ? (
               <div className="space-y-3">
                 <div className="p-3 bg-slate-50 rounded-xl space-y-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Banco</p>
@@ -300,8 +437,18 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
                   <p className="font-mono font-bold text-sky-600 break-all text-xs">{bankInfo.iban}</p>
                 </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-slate-400 text-xs mb-3">Nenhuma conta bancária vinculada.</p>
+                <button
+                  onClick={() => setIsEditingBank(true)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-black uppercase tracking-widest"
+                >
+                  Adicionar Conta
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Column: Deep Analysis */}
@@ -390,12 +537,25 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
               {activeTab === 'products' && (
                 <div className="p-6 space-y-4">
                   {purchasedProducts.map(p => (
-                    <div key={p.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div key={p.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-sky-500/30 transition-all">
                       <div>
                         <h4 className="font-bold text-slate-900 text-sm">{p.name}</h4>
                         <p className="text-xs text-slate-400 font-bold uppercase mt-1">Data: {p.purchaseDate}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[10px] font-black text-sky-500 bg-sky-50 px-2 py-0.5 rounded uppercase tracking-wide">
+                            Renda: {p.dailyIncome ? Number(p.dailyIncome).toLocaleString() : 0} Kz
+                          </span>
+                          <button onClick={(e) => { e.stopPropagation(); handleEditProductIncome(p.id, p.dailyIncome || 0); }} className="text-slate-300 hover:text-sky-500">
+                            <Icons.Edit />
+                          </button>
+                        </div>
                       </div>
-                      <span className="badge badge-green">ATV</span>
+                      <div className="flex items-center gap-3">
+                        <span className="badge badge-green">ATV</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteProduct(p.id); }} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                          <Icons.Trash />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

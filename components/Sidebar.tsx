@@ -14,8 +14,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
     { id: 'deposits', label: 'Depósitos', icon: Icons.Deposits },
     { id: 'withdrawals', label: 'Saques', icon: Icons.Withdrawals },
     { id: 'bonus', label: 'Bônus', icon: Icons.Bonus },
-    { id: 'logs', label: 'Logs', icon: Icons.Logs },
-    { id: 'settings', label: 'Ajustes', icon: Icons.Logs }, // Fallback to settings if icon not found
+    { id: 'logs', label: 'Suporte', icon: Icons.Logs },
+    { id: 'settings', label: 'Dados', icon: Icons.Dashboard }, // Replaced 'Ajustes' with 'Dados'
     { id: 'products', label: 'Produtos', icon: Icons.Products },
   ];
 
@@ -43,8 +43,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
                 key={item.id}
                 onClick={() => setCurrentPage(item.id as Page)}
                 className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all group ${isActive
-                    ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
-                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                   }`}
               >
                 <div className={`${isActive ? 'text-white' : 'text-slate-500 group-hover:text-sky-400'} transition-colors`}>
