@@ -27,7 +27,8 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
       .select('*');
 
     if (searchTerm) {
-      query = query.or(`phone.ilike.%${searchTerm}%,id.eq.${searchTerm}`);
+      // Search primarily by phone number as it is the main identifier for users here
+      query = query.ilike('phone', `%${searchTerm}%`);
     }
 
     const { data, error } = await query.limit(50);

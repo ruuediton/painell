@@ -16,6 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
     { id: 'bonus', label: 'Bônus', icon: Icons.Bonus },
     { id: 'logs', label: 'Logs', icon: Icons.Logs },
     { id: 'settings', label: 'Ajustes', icon: Icons.Logs }, // Fallback to settings if icon not found
+    { id: 'products', label: 'Produtos', icon: Icons.Products },
   ];
 
   return (
@@ -36,16 +37,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id || (item.id === 'users' && currentPage === 'user-detail');
-            
+
             return (
               <button
                 key={item.id}
                 onClick={() => setCurrentPage(item.id as Page)}
-                className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all group ${
-                  isActive 
-                    ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' 
+                className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all group ${isActive
+                    ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 <div className={`${isActive ? 'text-white' : 'text-slate-500 group-hover:text-sky-400'} transition-colors`}>
                   <Icon />
@@ -64,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage }) => {
         <div className="bg-slate-800/50 rounded-[2rem] p-5 border border-slate-700/50">
           <div className="flex items-center space-x-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center border border-sky-500/20">
-               <Icons.Bonus />
+              <Icons.Bonus />
             </div>
             <div>
               <p className="text-[10px] font-black text-sky-400 uppercase tracking-[0.2em]">Versão Pro</p>

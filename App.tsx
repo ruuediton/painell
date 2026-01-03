@@ -10,6 +10,7 @@ import Logs from './pages/Logs';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import TwoFactorGate from './pages/TwoFactorGate';
+import Products from './pages/Products';
 import { Page, User, AuditLog } from './types';
 import { MOCK_LOGS } from './services/mockData';
 import { supabase } from './services/supabase';
@@ -102,6 +103,7 @@ const App: React.FC = () => {
           onLogAction={addLogAction}
         />
       );
+      case 'products': return <Products />;
       default: return <Dashboard setCurrentPage={setCurrentPage} />;
     }
   };
