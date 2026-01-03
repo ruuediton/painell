@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [logs, setLogs] = useState<AuditLog[]>(MOCK_LOGS);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -106,19 +107,44 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-inter overflow-hidden">
-      {/* Sidebar - Desktop Only */}
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+    <div className="flex bg-slate-50 min-h-screen text-slate-900 font-inter selection:bg-sky-500 selection:text-white">
+      {/* Sidebar - Desktop */}
+      <Sidebar currentPage={currentPage} setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }} />
 
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-        <header className="sticky top-0 z-40 w-full h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 sm:px-10 flex items-center justify-between">
-          <div className="flex items-center lg:hidden space-x-3">
-            <div className="bg-sky-500 p-1.5 rounded-lg shadow-lg shadow-sky-500/20">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm lg:hidden animate-in fade-in duration-300"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div
+            className="w-72 h-full bg-slate-900 animate-in slide-in-from-left duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Sidebar currentPage={currentPage} setCurrentPage={(p) => { setCurrentPage(p); setIsMobileMenuOpen(false); }} />
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
+        <header className="sticky top-0 z-40 w-full h-16 md:h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-10 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
+            </button>
+            <div className="lg:hidden flex items-center space-x-2">
+              <div className="bg-sky-500 p-1.5 rounded-lg shadow-lg shadow-sky-500/20">
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h1 className="text-lg font-black text-slate-900 tracking-tight">dee<span className="text-sky-500">Bank</span></h1>
             </div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">painel<span className="text-sky-500">DeeBank</span></h1>
           </div>
 
           <div className="hidden lg:block">
@@ -127,26 +153,25 @@ const App: React.FC = () => {
             </h2>
           </div>
 
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-4 pr-6 border-r border-slate-200 hidden sm:flex">
-              <div className="text-right">
-                <p className="text-xs font-black text-slate-900 uppercase tracking-wide">
+          <div className="flex items-center space-x-3 md:space-x-6">
+            <div className="flex items-center space-x-3 md:space-x-4 pr-3 md:pr-6 border-r border-slate-200">
+              <div className="text-right hidden xs:block">
+                <p className="text-[10px] md:text-xs font-black text-slate-900 uppercase tracking-wide">
                   {session?.user?.email?.split('@')[0] || 'Admin'}
                 </p>
-                <div className="flex items-center justify-end space-x-1.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${is2FAEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                    {is2FAEnabled ? 'Protegido' : '2FA Pendente'}
+                <div className="flex items-center justify-end space-x-1">
+                  <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${is2FAEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
+                  <p className="text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest whitespace-nowrap">
+                    {is2FAEnabled ? 'OK' : 'OFF'}
                   </p>
                 </div>
               </div>
-              <div className="relative">
+              <div className="relative shrink-0">
                 <img
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.email || 'Admin'}`}
-                  className={`w-11 h-11 rounded-2xl bg-slate-100 border-2 shadow-sm transition-all ${is2FAEnabled ? 'border-emerald-500' : 'border-white'}`}
+                  className={`w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-slate-100 border-2 shadow-sm transition-all ${is2FAEnabled ? 'border-emerald-500' : 'border-white'}`}
                   alt="Profile"
                 />
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
               </div>
             </div>
 
@@ -167,7 +192,11 @@ const App: React.FC = () => {
       </div>
 
       <div className="lg:hidden">
-        <BottomNavbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+        <BottomNavbar
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          onOpenMenu={() => setIsMobileMenuOpen(true)}
+        />
       </div>
       <ToastContainer />
     </div>

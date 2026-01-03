@@ -321,58 +321,58 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
     <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700 pb-24">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className={`p-3 rounded-2xl ${type === 'DEPOSIT' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+        <div className="space-y-1 lg:space-y-2">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className={`p-2.5 md:p-3 rounded-xl md:rounded-2xl ${type === 'DEPOSIT' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
               {type === 'DEPOSIT' ? <Icons.Deposits /> : <Icons.Withdrawals />}
             </div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight uppercase">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight uppercase">
               {type === 'DEPOSIT' ? 'Depósitos' : 'Saques'}
             </h2>
           </div>
-          <p className="text-slate-500 font-medium text-lg ml-14">
+          <p className="text-slate-500 font-medium text-sm md:text-lg ml-11 md:ml-14">
             Auditoria inteligente e gestão de {type === 'DEPOSIT' ? 'recargas' : 'pagamentos'}.
           </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-white p-2 rounded-[2rem] border border-slate-100 shadow-sm pr-6">
-          <div className="flex -space-x-3">
+        <div className="flex items-center gap-3 md:gap-4 bg-white p-1.5 md:p-2 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm pr-4 md:pr-6">
+          <div className="flex -space-x-2 md:-space-x-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="w-10 h-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden">
+              <div key={i} className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden">
                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + (type === 'DEPOSIT' ? 10 : 20)}`} alt="User" />
               </div>
             ))}
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Status da Rede</p>
-            <p className="text-xs font-bold text-slate-900">Operando 100%</p>
+            <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Status da Rede</p>
+            <p className="text-[10px] md:text-xs font-bold text-slate-900">Operando 100%</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
         {/* ACTION COLUMN */}
-        <div className="xl:col-span-5 space-y-8">
-          <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-2xl shadow-slate-200/50 relative overflow-hidden group">
+        <div className="xl:col-span-5 space-y-6 md:space-y-8">
+          <div className="bg-white rounded-3xl md:rounded-[3rem] p-6 md:p-10 border border-slate-200 shadow-2xl shadow-slate-200/50 relative overflow-hidden group">
             {/* Search Decoration */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-700"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-sky-50 rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-700"></div>
 
-            <div className="relative z-10 space-y-8">
+            <div className="relative z-10 space-y-6 md:space-y-8">
               <div className="space-y-1">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Localizador</h3>
-                <p className="text-slate-400 font-medium text-sm">Insira os dados para encontrar a transação.</p>
+                <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Localizador</h3>
+                <p className="text-slate-400 font-medium text-xs md:text-sm">Insira os dados para encontrar a transação.</p>
               </div>
 
               <div className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Telefone do Cliente</label>
                   <div className="relative">
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 font-black text-lg">+244</span>
+                    <span className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-slate-300 font-black text-base md:text-lg">+244</span>
                     <input
                       type="text"
                       maxLength={9}
                       placeholder="9xx xxx xxx"
-                      className={`w-full pl-20 pr-6 py-5 bg-slate-50 border-2 rounded-[1.5rem] focus:ring-4 focus:ring-sky-500/10 outline-none transition-all font-black text-xl tracking-widest ${phoneError ? 'border-rose-200 text-rose-500' : 'border-slate-100 text-slate-700 focus:border-sky-500/30 shadow-inner'}`}
+                      className={`w-full pl-16 md:pl-20 pr-5 md:pr-6 py-4 md:py-5 bg-slate-50 border-2 rounded-xl md:rounded-[1.5rem] focus:ring-4 focus:ring-sky-500/10 outline-none transition-all font-black text-lg md:text-xl tracking-widest ${phoneError ? 'border-rose-200 text-rose-500' : 'border-slate-100 text-slate-700 focus:border-sky-500/30 shadow-inner'}`}
                       value={phone}
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/g, '');
@@ -558,13 +558,13 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         </div>
 
         {/* HISTORY COLUMN */}
-        <div className="xl:col-span-7 space-y-8">
-          <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-10 border-b border-slate-100 space-y-8">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+        <div className="xl:col-span-7 space-y-6 md:space-y-8">
+          <div className="bg-white rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+            <div className="p-6 md:p-10 border-b border-slate-100 space-y-6 md:space-y-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Fluxo Recente</h3>
-                  <p className="text-slate-400 font-medium text-sm">Últimas 20 transações em tempo real.</p>
+                  <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase">Fluxo Recente</h3>
+                  <p className="text-slate-400 font-medium text-xs md:text-sm">Últimas 20 transações em tempo real.</p>
                 </div>
 
                 <div className="flex bg-slate-100 p-1.5 rounded-[1.25rem] border border-slate-200/50">

@@ -112,38 +112,38 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
   };
 
   return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
+    <div className="space-y-6 md:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Usuários</h2>
-          <p className="text-slate-500 font-medium text-lg">Gerencie a base de clientes sincronizada com o Supabase.</p>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight uppercase">Usuários</h2>
+          <p className="text-slate-500 font-medium text-sm md:text-lg">Gerencie a base de clientes do Supabase.</p>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+      <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-slate-200 shadow-sm">
         <div className="relative group">
-          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors">
+          <span className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors">
             <Icons.Search />
           </span>
           <input
             type="text"
             placeholder="Buscar por telefone ou nome..."
-            className="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none transition-all font-medium text-slate-600 placeholder:text-slate-400 shadow-inner"
+            className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3 md:py-4 bg-slate-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none transition-all font-medium text-sm md:text-base text-slate-600 placeholder:text-slate-400 shadow-inner"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
-        <div className="overflow-x-auto">
-          <table className="premium-table w-full">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+        <div className="overflow-x-auto scrollbar-thin">
+          <table className="premium-table w-full min-w-[600px] md:min-w-full">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="text-left p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cliente</th>
-                <th className="text-left p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Saldo Disponível</th>
-                <th className="text-left p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registro</th>
-                <th className="text-right p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ações</th>
+                <th className="text-left p-4 md:p-6 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cliente</th>
+                <th className="text-left p-4 md:p-6 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Saldo</th>
+                <th className="text-left p-4 md:p-6 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registro</th>
+                <th className="text-right p-4 md:p-6 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -171,32 +171,29 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
                   className="group hover:bg-sky-50/30 transition-all duration-300 cursor-pointer"
                   onClick={() => onSelectUser(user)}
                 >
-                  <td className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-black group-hover:bg-sky-100 group-hover:text-sky-600 transition-colors">
+                  <td className="p-4 md:p-6">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-black group-hover:bg-sky-100 group-hover:text-sky-600 transition-colors text-sm md:text-base">
                         {user.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-black text-slate-900 leading-none mb-1">{user.phone}</p>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">{user.name}</p>
+                        <p className="font-black text-slate-900 leading-none mb-1 text-xs md:text-sm">{user.phone}</p>
+                        <p className="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-tighter truncate max-w-[100px] md:max-w-none">{user.name}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="p-6">
-                    <span className="font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl text-sm border border-emerald-100/50">
+                  <td className="p-4 md:p-6">
+                    <span className="font-black text-emerald-600 bg-emerald-50 px-2 md:px-3 py-1 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-sm border border-emerald-100/50 whitespace-nowrap">
                       Kz {user.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </td>
-                  <td className="p-6">
-                    <span className="font-bold text-slate-500 text-[10px] uppercase tracking-wider block">
+                  <td className="p-4 md:p-6">
+                    <span className="font-bold text-slate-500 text-[9px] md:text-[10px] uppercase tracking-wider block">
                       {new Date(user.createdAt).toLocaleDateString('pt-BR')}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-300 uppercase">
-                      {new Date(user.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
                   </td>
-                  <td className="p-6 text-right h-full">
-                    <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                  <td className="p-4 md:p-6 text-right">
+                    <div className="flex items-center justify-end gap-2 md:gap-3 md:opacity-0 md:group-hover:opacity-100 md:translate-x-4 md:group-hover:translate-x-0 transition-all duration-300">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -228,14 +225,14 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
       {/* Modal for Active Products */}
       {showProductsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-300 overflow-y-auto">
-          <div className="bg-white rounded-[2.5rem] p-10 w-full max-w-4xl shadow-2xl relative animate-in zoom-in-95 duration-300">
+          <div className="bg-white rounded-3xl md:rounded-[2.5rem] p-6 md:p-10 w-full max-w-4xl shadow-2xl relative animate-in zoom-in-95 duration-300">
             <button
               onClick={() => setShowProductsModal(false)}
-              className="absolute top-6 right-6 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 flex items-center justify-center transition-colors"
+              className="absolute top-4 md:top-6 right-4 md:right-6 w-8 h-8 md:w-10 md:h-10 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 flex items-center justify-center transition-colors text-xs"
             >✕</button>
-            <div className="mb-10">
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Produtos do Usuário</h3>
-              <p className="text-slate-500 font-medium mt-1">Lista de investimentos ativos e rendimentos.</p>
+            <div className="mb-6 md:mb-10">
+              <h3 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight uppercase">Produtos</h3>
+              <p className="text-slate-500 font-medium text-xs md:text-base mt-1">Lista de investimentos ativos.</p>
             </div>
 
             {selectedUserProducts.length === 0 ? (

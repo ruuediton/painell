@@ -337,60 +337,62 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
     <div className="space-y-8 animate-in slide-in-from-right-4 duration-500 pb-20 relative">
 
       {/* Header */}
-      <div className="flex items-center space-x-4 mb-6">
-        <button
-          onClick={onBack}
-          className="p-3 bg-white rounded-2xl hover:bg-slate-50 border border-slate-100 transition-all text-slate-400 hover:text-sky-500"
-        >
-          <Icons.ChevronLeft />
-        </button>
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{details.name}</h2>
-          <p className="text-slate-400 font-mono text-xs font-bold flex items-center gap-2">
-            ID: {details.id}
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="p-2.5 md:p-3 bg-white rounded-xl md:rounded-2xl hover:bg-slate-50 border border-slate-100 transition-all text-slate-400 hover:text-sky-500"
+          >
+            <Icons.ChevronLeft />
+          </button>
+          <div>
+            <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">{details.name}</h2>
+            <p className="text-slate-400 font-mono text-[10px] md:text-xs font-bold flex items-center gap-2">
+              ID: {details.id.substring(0, 18)}...
+            </p>
+          </div>
         </div>
-        <div className={`ml-auto px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ${details.status === UserStatus.ACTIVE ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+        <div className={`sm:ml-auto px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] font-black uppercase tracking-widest text-center ${details.status === UserStatus.ACTIVE ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
           {details.status === UserStatus.ACTIVE ? 'Conta Ativa' : 'Conta Bloqueada'}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:grid-cols-1">
 
         {/* Left Column: Quick Stats & Actions */}
         <div className="space-y-6">
-          <div className="premium-card p-8 bg-slate-900 text-white border-none shadow-2xl shadow-slate-900/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-[40px]"></div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Saldo Disponível</p>
-            <h3 className="text-4xl font-black mb-6">Kz {details.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+          <div className="premium-card p-6 md:p-8 bg-slate-900 text-white border-none shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-sky-500/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-[30px] md:blur-[40px]"></div>
+            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1 md:mb-2">Saldo Disponível</p>
+            <h3 className="text-2xl md:text-4xl font-black mb-4 md:mb-6">Kz {details.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setShowBalanceModal(true)} className="py-3 bg-sky-500 hover:bg-sky-400 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
+              <button onClick={() => setShowBalanceModal(true)} className="py-2.5 md:py-3 bg-sky-500 hover:bg-sky-400 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all">
                 Editar Saldo
               </button>
-              <button onClick={handleBlockUser} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${details.status === UserStatus.ACTIVE ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>
-                {details.status === UserStatus.ACTIVE ? 'Banir Conta' : 'Desbanir'}
+              <button onClick={handleBlockUser} className={`py-2.5 md:py-3 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${details.status === UserStatus.ACTIVE ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>
+                {details.status === UserStatus.ACTIVE ? 'Banir' : 'Desbanir'}
               </button>
             </div>
-            <button onClick={() => setShowPasswordModal(true)} className="w-full mt-3 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border border-white/10">
+            <button onClick={() => setShowPasswordModal(true)} className="w-full mt-2 md:mt-3 py-2.5 md:py-3 bg-white/10 hover:bg-white/20 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all border border-white/10">
               Alterar Senha
             </button>
           </div>
 
-          <div className="premium-card p-6 space-y-4">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalhes do Usuário</h4>
-            <div className="space-y-3">
-              <div className="flex justify-between p-3 bg-slate-50 rounded-xl">
-                <span className="text-xs font-bold text-slate-500">Telefone</span>
-                <span className="text-xs font-mono font-black text-slate-900">{details.phone}</span>
+          <div className="premium-card p-5 md:p-6 space-y-4">
+            <h4 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalhes do Usuário</h4>
+            <div className="space-y-2 md:space-y-3">
+              <div className="flex justify-between p-2.5 md:p-3 bg-slate-50 rounded-lg md:rounded-xl">
+                <span className="text-[10px] md:text-xs font-bold text-slate-500">Telefone</span>
+                <span className="text-[10px] md:text-xs font-mono font-black text-slate-900">{details.phone}</span>
               </div>
-              <div className="flex justify-between p-3 bg-slate-50 rounded-xl">
-                <span className="text-xs font-bold text-slate-500">Membro Desde</span>
-                <span className="text-xs font-black text-slate-900">{new Date(details.createdAt || '').toLocaleDateString('pt-BR')}</span>
+              <div className="flex justify-between p-2.5 md:p-3 bg-slate-50 rounded-lg md:rounded-xl">
+                <span className="text-[10px] md:text-xs font-bold text-slate-500">Membro Desde</span>
+                <span className="text-[10px] md:text-xs font-black text-slate-900">{new Date(details.createdAt || '').toLocaleDateString('pt-BR')}</span>
               </div>
-              <div className="flex justify-between p-3 bg-slate-50 rounded-xl">
-                <span className="text-xs font-bold text-slate-500">Subordinados</span>
-                <span className="text-xs font-black text-slate-900">{subordinatesCount}</span>
+              <div className="flex justify-between p-2.5 md:p-3 bg-slate-50 rounded-lg md:rounded-xl">
+                <span className="text-[10px] md:text-xs font-bold text-slate-500">Subordinados</span>
+                <span className="text-[10px] md:text-xs font-black text-slate-900">{subordinatesCount}</span>
               </div>
             </div>
           </div>
@@ -476,38 +478,38 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
           {/* Financial Summary */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="premium-card p-4 border-b-4 border-emerald-400">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Depositado</p>
-              <p className="text-xl font-black text-slate-900 mt-1">
+              <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Depositado</p>
+              <p className="text-lg md:text-xl font-black text-slate-900 mt-1">
                 Kz {transactions.filter(t => t.type === 'DEPOSIT' && t.status === TransactionStatus.RECHARGED).reduce((acc, t) => acc + t.amount, 0).toLocaleString()}
               </p>
-              <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded mt-2 inline-block">Confirmado (Recarregado)</span>
+              <span className="text-[8px] md:text-[9px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 md:py-1 rounded mt-2 inline-block">Confirmado</span>
             </div>
             <div className="premium-card p-4 border-b-4 border-rose-400">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Sacado</p>
-              <p className="text-xl font-black text-slate-900 mt-1">
+              <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Sacado</p>
+              <p className="text-lg md:text-xl font-black text-slate-900 mt-1">
                 Kz {transactions.filter(t => t.type === 'WITHDRAWAL' && t.status === TransactionStatus.RECHARGED).reduce((acc, t) => acc + t.amount, 0).toLocaleString()}
               </p>
-              <span className="text-[9px] font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded mt-2 inline-block">Confirmado (Aprovado)</span>
+              <span className="text-[8px] md:text-[9px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 md:py-1 rounded mt-2 inline-block">Confirmado</span>
             </div>
             <div className="premium-card p-4 border-b-4 border-sky-400">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Renda Diária Est.</p>
-              <p className="text-xl font-black text-slate-900 mt-1">
+              <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Renda Diária</p>
+              <p className="text-lg md:text-xl font-black text-slate-900 mt-1">
                 Kz {dailyIncome.toLocaleString()}
               </p>
-              <span className="text-[9px] font-bold text-sky-500 bg-sky-50 px-2 py-1 rounded mt-2 inline-block">Produtos Ativos</span>
+              <span className="text-[8px] md:text-[9px] font-bold text-sky-500 bg-sky-50 px-2 py-0.5 md:py-1 rounded mt-2 inline-block">Ativos</span>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
-            <div className="flex border-b border-slate-100 p-4 gap-2 overflow-x-auto">
+          <div className="bg-white rounded-2xl md:rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden min-h-[300px] md:min-h-[400px]">
+            <div className="flex border-b border-slate-100 p-2 md:p-4 gap-1 md:gap-2 overflow-x-auto whitespace-nowrap scrollbar-none">
               {(['overview', 'financial', 'products'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-50'}`}
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
                 >
-                  {tab === 'overview' ? 'Visão Geral' : tab === 'financial' ? 'Histórico Financeiro' : 'Produtos Ativos'}
+                  {tab === 'overview' ? 'Geral' : tab === 'financial' ? 'Finanças' : 'Produtos'}
                 </button>
               ))}
             </div>

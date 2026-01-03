@@ -33,7 +33,7 @@
   }
   
   .premium-card {
-    @apply bg-white rounded-[2rem] border border-slate-200/60 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/5 hover:-translate-y-1;
+    @apply bg-white rounded-2xl md:rounded-[2rem] border border-slate-200/60 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/5 md:hover:-translate-y-1;
   }
 
   .premium-table {
@@ -41,11 +41,11 @@
   }
 
   .premium-table th {
-    @apply bg-slate-50/50 py-4 px-6 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 border-b border-slate-100;
+    @apply bg-slate-50/50 py-3 md:py-4 px-4 md:px-6 text-[9px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] text-slate-400 border-b border-slate-100;
   }
 
   .premium-table td {
-    @apply py-5 px-6 text-sm font-medium text-slate-600 border-b border-slate-50 transition-colors;
+    @apply py-4 md:py-5 px-4 md:px-6 text-xs md:text-sm font-medium text-slate-600 border-b border-slate-50 transition-colors;
   }
 
   .premium-table tr:hover td {
@@ -53,11 +53,11 @@
   }
 
   .btn-primary {
-    @apply bg-sky-500 hover:bg-sky-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-sky-500/20 active:scale-95;
+    @apply bg-sky-500 hover:bg-sky-600 text-white px-5 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-bold transition-all shadow-lg shadow-sky-500/20 active:scale-95;
   }
 
   .badge {
-    @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider;
+    @apply px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-wider;
   }
 
   .badge-blue {
