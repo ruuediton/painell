@@ -290,300 +290,374 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
   };
 
   return (
-    <div className="space-y-10 animate-fade-in-up pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">
-            {type === 'DEPOSIT' ? 'Depósitos' : 'Saques'}
-          </h2>
-          <p className="text-slate-500 font-medium text-lg">Central de auditoria e liberação de fundos.</p>
+    <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700 pb-24">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className={`p-3 rounded-2xl ${type === 'DEPOSIT' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+              {type === 'DEPOSIT' ? <Icons.Deposits /> : <Icons.Withdrawals />}
+            </div>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight uppercase">
+              {type === 'DEPOSIT' ? 'Depósitos' : 'Saques'}
+            </h2>
+          </div>
+          <p className="text-slate-500 font-medium text-lg ml-14">
+            Auditoria inteligente e gestão de {type === 'DEPOSIT' ? 'recargas' : 'pagamentos'}.
+          </p>
         </div>
-        <div className="bg-sky-50 px-4 py-2 rounded-xl border border-sky-100 hidden md:block">
-          <span className="text-[10px] font-black text-sky-600 uppercase tracking-widest">Região: Angola (+244)</span>
+
+        <div className="flex items-center gap-4 bg-white p-2 rounded-[2rem] border border-slate-100 shadow-sm pr-6">
+          <div className="flex -space-x-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="w-10 h-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden">
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + (type === 'DEPOSIT' ? 10 : 20)}`} alt="User" />
+              </div>
+            ))}
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Status da Rede</p>
+            <p className="text-xs font-bold text-slate-900">Operando 100%</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left Panel: Search & Action */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="premium-card p-8 space-y-8 bg-slate-900 text-white border-none shadow-2xl shadow-slate-200">
-            <div className="space-y-4">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
-                Buscar Transação
-              </label>
-              <div className="flex-1 relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">+244</span>
-                <input
-                  type="text"
-                  maxLength={9}
-                  placeholder="9xx xxx xxx"
-                  className={`w-full pl-14 pr-4 py-4 bg-slate-800 border-2 rounded-2xl focus:ring-4 focus:ring-sky-500/20 outline-none transition-all font-mono font-bold text-lg ${phoneError ? 'border-rose-500 text-rose-500' : 'border-slate-700 text-white focus:border-sky-500'}`}
-                  value={phone}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    setPhone(val);
-                    if (hasSearched) setHasSearched(false);
-                  }}
-                />
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+        {/* ACTION COLUMN */}
+        <div className="xl:col-span-5 space-y-8">
+          <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-2xl shadow-slate-200/50 relative overflow-hidden group">
+            {/* Search Decoration */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-700"></div>
+
+            <div className="relative z-10 space-y-8">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Localizador</h3>
+                <p className="text-slate-400 font-medium text-sm">Insira os dados para encontrar a transação.</p>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <select
-                    value={searchStatus}
-                    onChange={(e) => {
-                      setSearchStatus(e.target.value);
-                      if (hasSearched) setHasSearched(false);
-                    }}
-                    className="w-full h-[56px] px-4 bg-slate-800 border-2 border-slate-700 rounded-2xl text-white font-bold text-xs uppercase focus:border-sky-500 outline-none appearance-none"
-                  >
-                    <option value="pendente">Pendente</option>
-                    <option value={successTerm}>{successLabel}</option>
-                    <option value="rejeitado">Rejeitado</option>
-                  </select>
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Telefone do Cliente</label>
+                  <div className="relative">
+                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 font-black text-lg">+244</span>
+                    <input
+                      type="text"
+                      maxLength={9}
+                      placeholder="9xx xxx xxx"
+                      className={`w-full pl-20 pr-6 py-5 bg-slate-50 border-2 rounded-[1.5rem] focus:ring-4 focus:ring-sky-500/10 outline-none transition-all font-black text-xl tracking-widest ${phoneError ? 'border-rose-200 text-rose-500' : 'border-slate-100 text-slate-700 focus:border-sky-500/30 shadow-inner'}`}
+                      value={phone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setPhone(val);
+                        if (hasSearched) setHasSearched(false);
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <input
-                    type="date"
-                    value={searchDate}
-                    onChange={(e) => {
-                      setSearchDate(e.target.value);
-                      if (hasSearched) setHasSearched(false);
-                    }}
-                    className="w-full h-[56px] px-4 bg-slate-800 border-2 border-slate-700 rounded-2xl text-white font-bold text-xs uppercase focus:border-sky-500 outline-none"
-                  />
-                </div>
-              </div>
-            </div>
 
-            <button
-              onClick={handleSearch}
-              disabled={!isValidPhone || loading}
-              className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${isValidPhone ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/20' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <Icons.Search />
-                <span>Localizar</span>
-              </div>
-            </button>
-
-            {hasSearched && (
-              <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-                {pendingTx ? (
-                  <div className="bg-slate-800/50 rounded-3xl border border-slate-700 p-6 space-y-5">
-                    {type === 'DEPOSIT' ? (
-                      <>
-                        <div className="flex justify-between items-start border-b border-slate-700/50 pb-4">
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Valor Solicitado</p>
-                            <p className="text-xl font-black text-white">Kz {pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                          </div>
-                          <div className="text-right space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Banco</p>
-                            <p className="text-sm font-bold text-white max-w-[150px] truncate" title={pendingTx.bankName}>
-                              {pendingTx.bankName || 'N/A'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="pt-2 flex flex-col gap-2">
-                          <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                            <span>DATA: {new Date(pendingTx.date).toLocaleString('pt-BR')}</span>
-                            <span>ID: {pendingTx.id.substring(0, 8)}</span>
-                          </div>
-                          <div className="flex justify-end">
-                            <span className={`badge ${pendingTx.status === TransactionStatus.RECHARGED ? 'badge-green' : pendingTx.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
-                              {pendingTx.status === TransactionStatus.RECHARGED ? successLabel : pendingTx.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex justify-between items-start border-b border-slate-700/50 pb-4">
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Titular da Conta</p>
-                            <p className="text-lg font-black">{pendingTx.userName}</p>
-                            <p className="text-xs text-slate-400 font-mono">{pendingTx.userPhone}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Valor Solicitado</p>
-                            <p className="text-xl font-black text-white">Kz {pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                          </div>
-                        </div>
-
-                        {type === 'WITHDRAWAL' && (
-                          <>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
-                                <div className="flex justify-between items-center">
-                                  <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Valor Final (90%)</p>
-                                  <button onClick={() => copyToClipboard(pendingTx.netValue?.toString() || '')} className="text-slate-400 hover:text-white"><Icons.Dashboard /></button>
-                                </div>
-                                <p className="text-lg font-black text-white">
-                                  Kz {pendingTx.netValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                </p>
-                              </div>
-                              <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Banco</p>
-                                <p className="text-sm font-bold text-white truncate" title={pendingTx.bankName}>
-                                  {pendingTx.bankName || 'N/A'}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
-                              <div className="flex justify-between items-center">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">IBAN</p>
-                                <button onClick={() => copyToClipboard(pendingTx.iban || '')} className="text-slate-400 hover:text-sky-400" title="Copiar IBAN">
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                                </button>
-                              </div>
-                              <p className="text-xs font-mono font-bold text-sky-200 break-all">
-                                {pendingTx.iban || 'Não informado'}
-                              </p>
-                            </div>
-                          </>
-                        )}
-
-                        <div className="pt-2 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                          <span>ID: {pendingTx.id.substring(0, 8)}</span>
-                          <span>DATA: {new Date(pendingTx.date).toLocaleDateString('pt-BR')}</span>
-                          <span className={`badge ${pendingTx.status === TransactionStatus.RECHARGED ? 'badge-green' : pendingTx.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
-                            {pendingTx.status}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    <button
-                      onClick={() => generatePDF(pendingTx)}
-                      className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all mt-4"
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado</label>
+                    <select
+                      value={searchStatus}
+                      onChange={(e) => {
+                        setSearchStatus(e.target.value);
+                        if (hasSearched) setHasSearched(false);
+                      }}
+                      className="w-full h-[60px] px-5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-700 font-bold text-xs uppercase focus:border-sky-500/30 outline-none appearance-none shadow-sm cursor-pointer"
                     >
-                      Baixar Comprovante PDF
-                    </button>
+                      <option value="pendente">Pendente</option>
+                      <option value={successTerm}>{successLabel}</option>
+                      <option value="rejeitado">Rejeitado</option>
+                    </select>
                   </div>
-                ) : (
-                  <div className="bg-sky-500/10 border border-sky-500/20 p-6 rounded-3xl text-center">
-                    <p className="text-sky-400 font-black text-[10px] uppercase tracking-widest">Nenhuma transação encontrada</p>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data</label>
+                    <input
+                      type="date"
+                      value={searchDate}
+                      onChange={(e) => {
+                        setSearchDate(e.target.value);
+                        if (hasSearched) setHasSearched(false);
+                      }}
+                      className="w-full h-[60px] px-5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-700 font-bold text-xs uppercase focus:border-sky-500/30 outline-none shadow-sm"
+                    />
                   </div>
-                )}
+                </div>
               </div>
-            )}
 
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
-                Ação de Auditoria
-              </label>
               <button
-                disabled={!pendingTx}
-                onClick={() => setShowModal(true)}
-                className={`w-full px-5 py-4 border-2 rounded-2xl text-left flex justify-between items-center transition-all ${!pendingTx ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-800 border-slate-700 hover:border-sky-500'}`}
+                onClick={handleSearch}
+                disabled={!isValidPhone || loading}
+                className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-[0.98] ${isValidPhone && !loading ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-900/20' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
               >
-                <span className={`font-bold text-sm ${selectedStatus ? 'text-white' : 'text-slate-500'}`}>
-                  {selectedStatus ? selectedStatus.toUpperCase() : 'Selecionar Novo Status...'}
-                </span>
-                <Icons.ChevronRight />
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Icons.Search />
+                    <span>Localizar Transação</span>
+                  </>
+                )}
               </button>
             </div>
-
-            <button
-              disabled={!pendingTx || !selectedStatus || isSubmitting}
-              onClick={handleConfirm}
-              className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${(!pendingTx || !selectedStatus || isSubmitting)
-                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                : 'bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/5 active:scale-95'
-                }`}
-            >
-              {isSubmitting ? 'Atualizando...' : 'Atualizar Transação'}
-            </button>
           </div>
+
+          {/* SEARCH RESULT CARD */}
+          {hasSearched && (
+            <div className="animate-in zoom-in-95 duration-500">
+              {pendingTx ? (
+                <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden">
+                  <div className={`p-8 ${type === 'DEPOSIT' ? 'bg-emerald-500' : 'bg-rose-500'} text-white`}>
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Comprovante de Auditoria</p>
+                        <h4 className="text-3xl font-black tracking-tight leading-none">
+                          Kz {pendingTx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </h4>
+                      </div>
+                      <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md border border-white/20">
+                        {type === 'DEPOSIT' ? <Icons.Deposits /> : <Icons.Withdrawals />}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/30 ${pendingTx.status === TransactionStatus.RECHARGED ? 'bg-white text-emerald-600' : pendingTx.status === TransactionStatus.REJECTED ? 'bg-white text-rose-600' : 'bg-white/20 text-white'}`}>
+                        {pendingTx.status === TransactionStatus.RECHARGED ? successLabel : pendingTx.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Aguardando'}
+                      </span>
+                      <span className="text-[9px] font-bold opacity-70 uppercase tracking-widest">ID: {pendingTx.id.substring(0, 12)}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-10 space-y-8 bg-slate-50/50">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Titular</p>
+                        <p className="text-sm font-black text-slate-800">{pendingTx.userName}</p>
+                        <p className="text-xs font-bold text-slate-400">{pendingTx.userPhone}</p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data do Pedido</p>
+                        <p className="text-sm font-black text-slate-800">{new Date(pendingTx.date).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-xs font-bold text-slate-400">{new Date(pendingTx.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="p-5 bg-white rounded-[1.5rem] border border-slate-100 flex justify-between items-center group/item transition-all hover:border-sky-200">
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Instituição</p>
+                          <p className="text-sm font-black text-slate-800">{pendingTx.bankName || 'Não especificado'}</p>
+                        </div>
+                        {pendingTx.bankName && (
+                          <button onClick={() => copyToClipboard(pendingTx.bankName || '')} className="p-2 text-slate-300 hover:text-sky-500 transition-colors opacity-0 group-hover/item:opacity-100">
+                            <Icons.Dashboard />
+                          </button>
+                        )}
+                      </div>
+
+                      {type === 'WITHDRAWAL' && (
+                        <>
+                          <div className="p-5 bg-white rounded-[1.5rem] border border-slate-100 group/item transition-all hover:border-sky-200">
+                            <div className="flex justify-between items-center mb-1">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">IBAN de Destino</p>
+                              <button onClick={() => copyToClipboard(pendingTx.iban || '')} className="p-2 text-slate-300 hover:text-sky-500 transition-colors opacity-0 group-hover/item:opacity-100">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                              </button>
+                            </div>
+                            <p className="text-xs font-mono font-black text-sky-600 break-all">{pendingTx.iban || 'N/A'}</p>
+                          </div>
+
+                          <div className="p-6 bg-slate-900 rounded-[1.5rem] text-white flex justify-between items-center shadow-lg shadow-slate-900/10">
+                            <div>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pagamento Líquido (Taxa 10%)</p>
+                              <p className="text-2xl font-black text-emerald-400">Kz {pendingTx.netValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <button onClick={() => copyToClipboard(pendingTx.netValue?.toString() || '')} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+                              <Icons.Dashboard />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-200/50 space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Executar Ação</label>
+                        <button
+                          onClick={() => setShowModal(true)}
+                          disabled={isSubmitting}
+                          className="w-full px-6 py-5 bg-white border-2 border-slate-100 hover:border-sky-500/30 rounded-2xl flex justify-between items-center group transition-all"
+                        >
+                          <span className={`font-black text-xs uppercase tracking-widest ${selectedStatus ? 'text-slate-900' : 'text-slate-400'}`}>
+                            {selectedStatus ? selectedStatus : 'Selecione o estado final...'}
+                          </span>
+                          <div className="p-1 bg-slate-50 rounded-lg group-hover:bg-sky-50 transition-colors">
+                            <Icons.ChevronRight />
+                          </div>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          onClick={() => generatePDF(pendingTx)}
+                          className="py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95"
+                        >
+                          Baixar PDF
+                        </button>
+                        <button
+                          disabled={!selectedStatus || isSubmitting}
+                          onClick={handleConfirm}
+                          className={`py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl active:scale-95 ${!selectedStatus || isSubmitting ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20'}`}
+                        >
+                          {isSubmitting ? 'Sincronizando...' : 'Confirmar'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 p-16 text-center">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                    <Icons.Search />
+                  </div>
+                  <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">Vazio por aqui</h4>
+                  <p className="text-slate-500 text-sm font-medium mt-1">Não encontramos nada com esses filtros.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Right Panel: History */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden h-full">
-            <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">Histórico Recente</h3>
-              <div className="flex bg-slate-100 p-1 rounded-xl">
-                {(['all', successTerm, 'rejeitado', 'pendente'] as const).map(filter => (
+        {/* HISTORY COLUMN */}
+        <div className="xl:col-span-7 space-y-8">
+          <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+            <div className="p-10 border-b border-slate-100 space-y-8">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Fluxo Recente</h3>
+                  <p className="text-slate-400 font-medium text-sm">Últimas 20 transações em tempo real.</p>
+                </div>
+
+                <div className="flex bg-slate-100 p-1.5 rounded-[1.25rem] border border-slate-200/50">
                   <button
-                    key={filter}
-                    onClick={() => setHistoryFilter(filter)}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${historyFilter === filter ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                    onClick={() => setHistoryFilter('all')}
+                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyFilter === 'all' ? 'bg-white shadow-lg shadow-black/5 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                   >
-                    {filter === 'all' ? 'Todos' : filter === successTerm ? successLabel : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    Tudo
                   </button>
-                ))}
+                  <button
+                    onClick={() => setHistoryFilter(successTerm)}
+                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyFilter === successTerm ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    {successLabel}
+                  </button>
+                  <button
+                    onClick={() => setHistoryFilter('rejeitado')}
+                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyFilter === 'rejeitado' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    Rejeitados
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="premium-table">
+
+            <div className="flex-1 overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr>
-                    <th>Usuário</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                    <th>Data</th>
+                  <tr className="bg-slate-50/50">
+                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100">Beneficiário</th>
+                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100">Montante</th>
+                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 text-right">Data/Status</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {recentTransactions.map((t) => (
-                    <tr key={t.id}>
-                      <td>
-                        <p className="font-bold text-slate-900">{t.userName}</p>
-                        <p className="text-[10px] text-slate-400 font-bold">{t.userPhone}</p>
+                <tbody className="divide-y divide-slate-100">
+                  {recentTransactions.length === 0 ? (
+                    Array(5).fill(0).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="p-8"><div className="h-10 bg-slate-100 rounded-2xl w-40"></div></td>
+                        <td className="p-8"><div className="h-6 bg-slate-50 rounded-xl w-24"></div></td>
+                        <td className="p-8"><div className="h-8 bg-slate-100 rounded-xl w-32 ml-auto"></div></td>
+                      </tr>
+                    ))
+                  ) : recentTransactions.map((t) => (
+                    <tr key={t.id} className="group hover:bg-slate-50/50 transition-all duration-300">
+                      <td className="p-8">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${t.status === TransactionStatus.RECHARGED ? 'bg-emerald-50 text-emerald-600' : t.status === TransactionStatus.REJECTED ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-400'}`}>
+                            {t.userName.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-900 group-hover:text-sky-600 transition-colors uppercase tracking-tight">{t.userName}</p>
+                            <p className="text-xs font-bold text-slate-400">{t.userPhone}</p>
+                          </div>
+                        </div>
                       </td>
-                      <td>
-                        <span className="font-black text-slate-700">{t.amount.toLocaleString('pt-BR')} Kz</span>
+                      <td className="p-8 font-black text-slate-900 text-lg">
+                        Kz {t.amount.toLocaleString('pt-BR')}
                       </td>
-                      <td>
-                        <span className={`badge ${t.status === TransactionStatus.RECHARGED ? 'badge-green' : t.status === TransactionStatus.REJECTED ? 'badge-red' : 'badge-orange'}`}>
-                          {t.status === TransactionStatus.RECHARGED ? successLabel : t.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="text-xs font-medium text-slate-500">{t.date}</span>
+                      <td className="p-8 text-right space-y-2">
+                        <div className="flex justify-end">
+                          <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-tighter ${t.status === TransactionStatus.RECHARGED ? 'bg-emerald-100 text-emerald-600' : t.status === TransactionStatus.REJECTED ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+                            {t.status === TransactionStatus.RECHARGED ? successLabel : t.status === TransactionStatus.REJECTED ? 'Rejeitado' : 'Pendente'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t.date}</p>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            <div className="p-8 bg-slate-50/50 border-t border-slate-100 text-center">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fim da lista de auditoria</p>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* STATUS SELECTION MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-8 text-center bg-slate-900">
-              <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Auditar Transação</h3>
-              <p className="text-slate-400 text-[10px] mt-2 font-bold uppercase">Definir estado final</p>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+            <div className="p-10 text-center bg-slate-900 text-white relative">
+              <div className="absolute top-0 right-0 p-4 opacity-20"><Icons.Dashboard /></div>
+              <h3 className="font-black uppercase text-xs tracking-[0.3em] mb-2">Auditoria deeBank</h3>
+              <p className="text-slate-400 text-sm font-medium">Defina o estado final da transação para liberação de fundos.</p>
             </div>
-            <div className="p-6 space-y-2">
-              {[successTerm, 'rejeitado', 'pendente'].map((status) => (
+
+            <div className="p-8 space-y-3 bg-slate-50/30">
+              {[
+                { id: successTerm, label: successLabel, color: 'emerald', icon: '✅' },
+                { id: 'rejeitado', label: 'Rejeitado', color: 'rose', icon: '❌' },
+                { id: 'pendente', label: 'Pendente', color: 'amber', icon: '⏳' }
+              ].map((status) => (
                 <button
-                  key={status}
+                  key={status.id}
                   onClick={() => {
-                    setSelectedStatus(status);
+                    setSelectedStatus(status.id);
                     setShowModal(false);
                   }}
-                  className="w-full py-4 px-6 hover:bg-slate-50 rounded-2xl text-sm font-black text-slate-700 transition-all text-left flex justify-between items-center group"
+                  className={`w-full py-5 px-6 bg-white hover:bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-${status.color}-200 flex items-center justify-between group transition-all duration-300 active:scale-95`}
                 >
-                  <span className="uppercase tracking-tight group-hover:text-blue-600 transition-colors uppercase">
-                    {status === successTerm ? successLabel : status}
-                  </span>
-                  {status === successTerm && <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>}
-                  {status === 'rejeitado' && <div className="w-2 h-2 bg-rose-500 rounded-full"></div>}
-                  {status === 'pendente' && <div className="w-2 h-2 bg-amber-500 rounded-full"></div>}
+                  <div className="flex items-center gap-4">
+                    <span className="text-xl">{status.icon}</span>
+                    <span className={`text-xs font-black uppercase tracking-widest text-slate-600 group-hover:text-${status.color}-600`}>
+                      {status.label}
+                    </span>
+                  </div>
+                  <div className={`w-2 h-2 rounded-full bg-${status.color}-500 transform group-hover:scale-150 transition-transform`}></div>
                 </button>
               ))}
             </div>
-            <div className="p-4 bg-slate-50">
+
+            <div className="p-6 bg-white flex justify-center border-t border-slate-100">
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full py-4 text-center text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                className="text-[10px] font-black text-slate-300 hover:text-slate-500 uppercase tracking-[0.3em] transition-colors"
               >
-                Cancelar
+                Descartar Ação
               </button>
             </div>
           </div>
