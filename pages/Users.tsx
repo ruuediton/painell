@@ -11,6 +11,10 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  // Modal state for active products
+  const [showProductsModal, setShowProductsModal] = useState(false);
+  const [selectedUserProducts, setSelectedUserProducts] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -53,6 +57,55 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
     setLoading(false);
   };
 
+  // Fetch products for a specific user from Supabase
+  const fetchUserProducts = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('user_products')
+      .select('*')
+      .eq('user_id', userId);
+    if (error) {
+      console.error('Error fetching user products:', error);
+      return [];
+    }
+    return data || [];
+  };
+
+  // Open modal showing active products for a user
+  const openProducts = async (userId: string) => {
+    const products = await fetchUserProducts(userId);
+    setSelectedUserId(userId);
+    setSelectedUserProducts(products);
+    setShowProductsModal(true);
+  };
+
+  // Edit daily income of a product (simple prompt for demo)
+  const handleEditIncome = (productId: string) => {
+    const newIncomeStr = prompt('Nova renda diária (Kz):');
+    if (newIncomeStr === null) return;
+    const newIncome = Number(newIncomeStr);
+    if (isNaN(newIncome)) return alert('Valor inválido');
+    const updated = selectedUserProducts.map(p =>
+      p.id === productId ? { ...p, daily_income: newIncome } : p
+    );
+    setSelectedUserProducts(updated);
+    // Optionally persist change to Supabase here
+  };
+
+  // Delete product from user (remove from UI only for demo)
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Deseja remover este produto?')) return;
+    const { error } = await supabase
+      .from('user_products')
+      .delete()
+      .eq('id', productId);
+    if (error) {
+      console.error('Error deleting product:', error);
+      return;
+    }
+    const updated = selectedUserProducts.filter(p => p.id !== productId);
+    setSelectedUserProducts(updated);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in-up duration-700">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -86,11 +139,12 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
                 <th className="text-left p-6">Saldo (Kz)</th>
                 <th className="text-left p-6">Data/Hora de Registro</th>
                 <th className="text-right p-6">Ação</th>
+                <th className="text-right p-6">Produtos</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4} className="p-20 text-center text-slate-400">Carregando usuários...</td></tr>
+                <tr><td colSpan={5} className="p-20 text-center text-slate-400">Carregando usuários...</td></tr>
               ) : users.map((user) => (
                 <tr
                   key={user.id}
@@ -119,6 +173,17 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
                       Ver Detalhes
                     </button>
                   </td>
+                  <td className="text-right p-6">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openProducts(user.id);
+                      }}
+                      className="bg-sky-500 hover:bg-sky-600 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all"
+                    >
+                      Produtos Ativos
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -135,6 +200,59 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
       </div>
     </div>
   );
+
+  {/* Modal for Active Products */ }
+  {
+    showProductsModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 overflow-y-auto">
+        <div className="bg-white rounded-[2rem] p-8 w-full max-w-3xl shadow-2xl relative">
+          <button
+            onClick={() => setShowProductsModal(false)}
+            className="absolute top-4 right-4 text-slate-500 hover:text-slate-700"
+          >✕</button>
+          <h3 className="text-2xl font-black text-slate-900 mb-6">Produtos Ativos</h3>
+          {selectedUserProducts.length === 0 ? (
+            <p className="text-center text-slate-500">Nenhum produto ativo.</p>
+          ) : (
+            <table className="w-full premium-table">
+              <thead>
+                <tr>
+                  <th className="p-4 text-left">Nome</th>
+                  <th className="p-4 text-left">Renda Diária (Kz)</th>
+                  <th className="p-4 text-left">Duração (dias)</th>
+                  <th className="p-4 text-left">Data da Compra</th>
+                  <th className="p-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedUserProducts.map((p) => (
+                  <tr key={p.id} className="border-b border-slate-200">
+                    <td className="p-4">{p.name}</td>
+                    <td className="p-4">Kz {Number(p.daily_income).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td className="p-4">{p.duration_days}</td>
+                    <td className="p-4">{new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
+                    <td className="p-4 text-right space-x-2">
+                      <button
+                        onClick={() => handleEditIncome(p.id)}
+                        className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-xs"
+                      >Editar Renda</button>
+                      <button
+                        onClick={() => handleDeleteProduct(p.id)}
+                        className="px-3 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-md text-xs"
+                      >
+                        <Icons.Trash />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    )
+  }
+
 };
 
 export default Users;
