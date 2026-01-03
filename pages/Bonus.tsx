@@ -14,6 +14,7 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
   const [expiryDate, setExpiryDate] = useState('');
   const [bonusCodes, setBonusCodes] = useState<BonusCode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchBonusCodes();
@@ -48,6 +49,7 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
     }
 
     try {
+      setIsSubmitting(true);
       const newCodeStr = code.trim().toUpperCase();
       const newVal = parseFloat(bonusValue);
 
@@ -91,6 +93,8 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
       }
     } catch (err: any) {
       showToast('Erro ao criar bônus: ' + err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -186,10 +190,11 @@ const Bonus: React.FC<BonusProps> = ({ onLogAction }) => {
 
               <button
                 onClick={handleAddCode}
-                className="w-full py-5 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg shadow-black/20 active:scale-95 flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="w-full py-5 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg shadow-black/20 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>Criar Recompensa</span>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                <span>{isSubmitting ? 'Registrando...' : 'Criar Recompensa'}</span>
+                {!isSubmitting && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>}
               </button>
             </div>
           </div>

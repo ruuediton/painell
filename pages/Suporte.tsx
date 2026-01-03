@@ -14,6 +14,7 @@ const Suporte: React.FC = () => {
     const [links, setLinks] = useState<SupportLink | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formState, setFormState] = useState({
         whatsapp_gerente_url: '',
         whatsapp_grupo_vendas_url: '',
@@ -51,6 +52,7 @@ const Suporte: React.FC = () => {
     };
 
     const handleSave = async () => {
+        setIsSubmitting(true);
         try {
             if (links?.id) {
                 const { error } = await supabase
@@ -70,6 +72,8 @@ const Suporte: React.FC = () => {
             showToast('Links de suporte atualizados com sucesso!', 'success');
         } catch (err: any) {
             showToast('Erro ao salvar: ' + err.message, 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -103,9 +107,10 @@ const Suporte: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="text-emerald-500 hover:text-emerald-600 font-bold uppercase text-xs tracking-widest transition-colors"
+                                disabled={isSubmitting}
+                                className="text-emerald-500 hover:text-emerald-600 font-bold uppercase text-xs tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Salvar
+                                {isSubmitting ? 'Salvando...' : 'Salvar'}
                             </button>
                         </div>
                     )}

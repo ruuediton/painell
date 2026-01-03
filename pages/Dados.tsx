@@ -18,8 +18,6 @@ const Dados: React.FC = () => {
 
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [showModal, setShowModal] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentBank, setCurrentBank] = useState<Partial<CompanyBank>>({});
 
