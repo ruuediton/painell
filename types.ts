@@ -97,4 +97,4 @@ export interface Notification {
   read: boolean;
 }
 
-export type Page = 'dashboard' | 'users' | 'user-detail' | 'deposits' | 'withdrawals' | 'bonus' | 'logs' | 'settings' | 'login' | '2fa';
+export type Page = 'dashboard' | 'users' | 'user-detail' | 'deposits' | 'withdrawals' | 'bonus' | 'logs' | 'settings' | 'login' | '2fa' | 'products';

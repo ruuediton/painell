@@ -213,6 +213,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
               <button onClick={() => setCurrentPage('logs')} className="px-8 py-4 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-sky-500/20 active:scale-95">
                 Ver Auditoria Real
               </button>
+              <button onClick={() => setCurrentPage('products')} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-slate-900/20 active:scale-95 border border-slate-700">
+                Ver Produtos
+              </button>
             </div>
           </div>
         </div>
