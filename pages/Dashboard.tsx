@@ -112,36 +112,52 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <StatCard
-          title="Total de Usuários"
-          value={stats.loading ? '...' : stats.totalUsers}
-          icon={<Icons.Users />}
-          trend={{ value: 'Real-time', positive: true }}
-          onClick={() => setCurrentPage('users')}
-        />
-        <StatCard
-          title="Usuários VIP"
-          value={stats.loading ? '...' : stats.totalVipUsers}
-          icon={<Icons.Bonus />}
-          trend={{ value: 'Active', positive: true }}
-          onClick={() => setCurrentPage('users')}
-        />
-        <StatCard
-          title="Saques Hoje (Kz)"
-          value={stats.loading ? '...' : `Kz ${stats.withdrawalsToday.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={<Icons.Withdrawals />}
-          onClick={() => setCurrentPage('withdrawals')}
-        />
-        <StatCard
-          title="Volume de Depósitos (Kz)"
-          value={stats.loading ? '...' : `Kz ${stats.totalDeposits.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={<Icons.Deposits />}
-          onClick={() => setCurrentPage('deposits')}
-        />
+        {stats.loading ? (
+          Array(4).fill(0).map((_, i) => (
+            <div key={i} className="h-32 bg-white rounded-3xl animate-pulse border border-slate-100 shadow-sm"></div>
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Total de Usuários"
+              value={stats.totalUsers}
+              icon={<Icons.Users />}
+              trend={{ value: 'Tempo Real', positive: true }}
+              onClick={() => setCurrentPage('users')}
+            />
+            <StatCard
+              title="Usuários VIP"
+              value={stats.totalVipUsers}
+              icon={<Icons.Bonus />}
+              trend={{ value: 'Ativos agora', positive: true }}
+              onClick={() => setCurrentPage('users')}
+            />
+            <StatCard
+              title="Saques Hoje"
+              value={`Kz ${stats.withdrawalsToday.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={<Icons.Withdrawals />}
+              onClick={() => setCurrentPage('withdrawals')}
+            />
+            <StatCard
+              title="Volume de Depósitos"
+              value={`Kz ${stats.totalDeposits.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={<Icons.Deposits />}
+              onClick={() => setCurrentPage('deposits')}
+            />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
-        <div className="premium-card p-10 space-y-6">
+        <div className="premium-card p-10 space-y-6 relative overflow-hidden">
+          {stats.loading && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculando métricas...</p>
+              </div>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <div>
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Crescimento</h4>
@@ -172,7 +188,15 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentPage }) => {
           </div>
         </div>
 
-        <div className="premium-card p-10 space-y-6">
+        <div className="premium-card p-10 space-y-6 relative overflow-hidden">
+          {stats.loading && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Processando fluxo...</p>
+              </div>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <div>
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Performance</h4>

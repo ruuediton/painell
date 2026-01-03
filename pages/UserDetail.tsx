@@ -16,6 +16,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [purchasedProducts, setPurchasedProducts] = useState<UserProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New Detailed Stats
   const [subordinatesCount, setSubordinatesCount] = useState(0);
@@ -171,6 +172,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
     if (isNaN(amount)) return;
 
     try {
+      setIsSubmitting(true);
       const { error } = await supabase
         .from('profiles')
         .update({ balance: amount })
@@ -182,9 +184,11 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
       setShowBalanceModal(false);
       setNewBalance('');
       onLogAction('Alteração de Saldo', `Admin alterou saldo de ${user.name} para Kz ${amount}`);
-      alert('Saldo atualizado com sucesso!');
+      showToast('Saldo atualizado com sucesso!', 'success');
     } catch (err: any) {
-      alert('Erro: ' + err.message);
+      showToast('Erro ao atualizar saldo: ' + err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -193,16 +197,19 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
     // Note: Use a Remote Procedure Call or Edge Function for security in production.
     // For this context, we simulate or attempt the only available client-side method if keys allow.
     try {
+      setIsSubmitting(true);
       const { error } = await supabase.auth.updateUser({ password: newPassword });
 
       if (error) throw error;
 
-      alert('Senha atualizada com sucesso!');
+      showToast('Senha atualizada com sucesso!', 'success');
       setShowPasswordModal(false);
       onLogAction('Alteração de Senha', `Admin alterou a senha do usuário ${user.id}`);
 
     } catch (err: any) {
-      alert('Erro ao tentar alterar senha: ' + err.message + '\nNota: Esta operação requer privilégios de Service Role se o usuário não estiver logado.');
+      showToast('Erro ao tentar alterar senha: ' + err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -211,16 +218,22 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
     const newStatusEnum = details.status === UserStatus.ACTIVE ? UserStatus.BLOCKED : UserStatus.ACTIVE;
 
     if (window.confirm(`Tem certeza que deseja ${newStatus === 'bloqueado' ? 'bloquear' : 'desbloquear'} este usuário?`)) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ state: newStatus })
-        .eq('id', user.id);
+      setIsSubmitting(true);
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ state: newStatus })
+          .eq('id', user.id);
 
-      if (!error) {
+        if (error) throw error;
+
         setDetails(prev => ({ ...prev, status: newStatusEnum }));
         onLogAction('Status Usuário', `Admin alterou status para ${newStatusEnum}`);
-      } else {
-        alert('Erro ao atualizar status.');
+        showToast(`Usuário ${newStatus === 'bloqueado' ? 'bloqueado' : 'desbloqueado'} com sucesso!`, 'success');
+      } catch (err: any) {
+        showToast('Erro ao atualizar status: ' + err.message, 'error');
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -529,9 +542,45 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
                 </table>
               )}
               {activeTab === 'overview' && (
-                <div className="p-8 text-center text-slate-400 text-sm">
-                  <Icons.Dashboard />
-                  <p className="mt-2 font-bold">Selecione uma aba para ver detalhes.</p>
+                <div className="p-10 space-y-8 animate-in fade-in duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Informações Pessoais</h4>
+                      <div className="space-y-3">
+                        <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase">Nome Completo</span>
+                          <span className="text-sm font-black text-slate-900">{details.name}</span>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase">Telefone</span>
+                          <span className="text-sm font-black text-sky-600">{details.phone}</span>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase">ID de Sistema</span>
+                          <span className="text-[10px] font-mono font-bold text-slate-400">{details.id}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atividade & Convites</h4>
+                      <div className="space-y-3">
+                        <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase">Equipe Registrada</span>
+                          <span className="text-sm font-black text-slate-900">{subordinatesCount} Membros</span>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase">Status Global</span>
+                          <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${details.status === UserStatus.ACTIVE ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                            {details.status}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase">Data de Cadastro</span>
+                          <span className="text-sm font-black text-slate-900">{new Date(details.createdAt || '').toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               {activeTab === 'products' && (
@@ -579,8 +628,10 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
               placeholder="0.00"
             />
             <div className="flex gap-4">
-              <button onClick={() => setShowBalanceModal(false)} className="flex-1 py-3 text-slate-500 font-bold uppercase text-xs hover:bg-slate-50 rounded-xl">Cancelar</button>
-              <button onClick={handleUpdateBalance} className="flex-1 py-3 bg-sky-500 text-white font-bold uppercase text-xs rounded-xl hover:bg-sky-600 shadow-lg shadow-sky-500/20">Confirmar</button>
+              <button disabled={isSubmitting} onClick={() => setShowBalanceModal(false)} className="flex-1 py-3 text-slate-500 font-bold uppercase text-xs hover:bg-slate-50 rounded-xl transition-all">Cancelar</button>
+              <button disabled={isSubmitting} onClick={handleUpdateBalance} className="flex-1 py-3 bg-sky-500 text-white font-bold uppercase text-xs rounded-xl hover:bg-sky-600 shadow-lg shadow-sky-500/20 transition-all disabled:opacity-50">
+                {isSubmitting ? 'Atualizando...' : 'Confirmar'}
+              </button>
             </div>
           </div>
         </div>
@@ -599,8 +650,10 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onBack, onLogAction }) =>
               placeholder="Nova Senha"
             />
             <div className="flex gap-4">
-              <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-3 text-slate-500 font-bold uppercase text-xs hover:bg-slate-50 rounded-xl">Cancelar</button>
-              <button onClick={handleChangePassword} className="flex-1 py-3 bg-rose-500 text-white font-bold uppercase text-xs rounded-xl hover:bg-rose-600 shadow-lg shadow-rose-500/20">Confirmar Alteração</button>
+              <button disabled={isSubmitting} onClick={() => setShowPasswordModal(false)} className="flex-1 py-3 text-slate-500 font-bold uppercase text-xs hover:bg-slate-50 rounded-xl transition-all">Cancelar</button>
+              <button disabled={isSubmitting} onClick={handleChangePassword} className="flex-1 py-3 bg-rose-500 text-white font-bold uppercase text-xs rounded-xl hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all disabled:opacity-50">
+                {isSubmitting ? 'Alterando...' : 'Confirmar Alteração'}
+              </button>
             </div>
           </div>
         </div>

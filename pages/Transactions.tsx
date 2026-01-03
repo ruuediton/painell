@@ -3,6 +3,7 @@ import { supabase } from '../services/supabase';
 import { TransactionStatus, Transaction } from '../types';
 import { Icons } from '../constants';
 import { jsPDF } from 'jspdf';
+import { showToast } from '../components/Toast';
 
 interface ExtendedTransaction extends Transaction {
   bankName?: string;
@@ -26,6 +27,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
   const [pendingTx, setPendingTx] = useState<ExtendedTransaction | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
 
   // States with dynamic types
@@ -203,6 +205,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
 
   const handleConfirm = async () => {
     if (!pendingTx || !selectedStatus) return;
+    setIsSubmitting(true);
 
     try {
       // Use logic status directly
@@ -223,7 +226,7 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
         `Admin alterou status da transação ${pendingTx.id} para ${dbStatus}`
       );
 
-      alert(`Sucesso! Status alterado para ${dbStatus}.`);
+      showToast(`Sucesso! Status alterado para ${dbStatus}.`, 'success');
 
       setPhone('');
       setPendingTx(null);
@@ -232,13 +235,15 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
       fetchRecentTransactions();
 
     } catch (err: any) {
-      alert('Erro ao atualizar: ' + err.message);
+      showToast('Erro ao atualizar: ' + err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('Copiado para a área de transferência!');
+    showToast('Copiado para a área de transferência!', 'success');
   };
 
   const generatePDF = (tx: ExtendedTransaction) => {
@@ -481,14 +486,14 @@ const Transactions: React.FC<TransactionsProps> = ({ type, onLogAction }) => {
             </div>
 
             <button
-              disabled={!pendingTx || !selectedStatus}
+              disabled={!pendingTx || !selectedStatus || isSubmitting}
               onClick={handleConfirm}
-              className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${(!pendingTx || !selectedStatus)
+              className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${(!pendingTx || !selectedStatus || isSubmitting)
                 ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                 : 'bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/5 active:scale-95'
                 }`}
             >
-              Atualizar Transação
+              {isSubmitting ? 'Atualizando...' : 'Atualizar Transação'}
             </button>
           </div>
         </div>

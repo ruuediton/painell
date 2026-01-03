@@ -112,7 +112,7 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in-up duration-700">
+    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Usuários</h2>
@@ -127,8 +127,8 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
           </span>
           <input
             type="text"
-            placeholder="Buscar por telefone ou ID..."
-            className="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none transition-all font-medium text-slate-600 placeholder:text-slate-400"
+            placeholder="Buscar por telefone ou nome..."
+            className="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-sky-500/20 outline-none transition-all font-medium text-slate-600 placeholder:text-slate-400 shadow-inner"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -139,125 +139,161 @@ const Users: React.FC<UsersProps> = ({ onSelectUser }) => {
         <div className="overflow-x-auto">
           <table className="premium-table w-full">
             <thead>
-              <tr>
-                <th className="text-left p-6">Número</th>
-                <th className="text-left p-6">Saldo (Kz)</th>
-                <th className="text-left p-6">Data/Hora de Registro</th>
-                <th className="text-right p-6">Ação</th>
-                <th className="text-right p-6">Produtos</th>
+              <tr className="bg-slate-50/50">
+                <th className="text-left p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cliente</th>
+                <th className="text-left p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Saldo Disponível</th>
+                <th className="text-left p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registro</th>
+                <th className="text-right p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ações</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan={5} className="p-20 text-center text-slate-400">Carregando usuários...</td></tr>
+                Array(5).fill(0).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="p-6"><div className="h-10 bg-slate-100 rounded-xl w-32"></div></td>
+                    <td className="p-6"><div className="h-6 bg-slate-50 rounded-lg w-24"></div></td>
+                    <td className="p-6"><div className="h-4 bg-slate-50 rounded-md w-28"></div></td>
+                    <td className="p-6 text-right"><div className="h-10 bg-slate-100 rounded-xl w-32 ml-auto"></div></td>
+                  </tr>
+                ))
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-20 text-center">
+                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                      <Icons.Search />
+                    </div>
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum usuário encontrado</p>
+                  </td>
+                </tr>
               ) : users.map((user) => (
                 <tr
                   key={user.id}
-                  className="cursor-pointer group hover:bg-slate-50/50 transition-colors"
+                  className="group hover:bg-sky-50/30 transition-all duration-300 cursor-pointer"
                   onClick={() => onSelectUser(user)}
                 >
                   <td className="p-6">
-                    <span className="font-black text-slate-700 text-sm">{user.phone}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-black group-hover:bg-sky-100 group-hover:text-sky-600 transition-colors">
+                        {user.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-900 leading-none mb-1">{user.phone}</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">{user.name}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="p-6">
-                    <span className="font-black text-emerald-600">Kz {user.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </td>
-                  <td className="p-6">
-                    <span className="font-bold text-slate-500 text-xs uppercase">
-                      {new Date(user.createdAt).toLocaleString('pt-BR')}
+                    <span className="font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl text-sm border border-emerald-100/50">
+                      Kz {user.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </td>
-                  <td className="text-right p-6">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectUser(user);
-                      }}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
-                    >
-                      Ver Detalhes
-                    </button>
+                  <td className="p-6">
+                    <span className="font-bold text-slate-500 text-[10px] uppercase tracking-wider block">
+                      {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-300 uppercase">
+                      {new Date(user.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </td>
-                  <td className="text-right p-6">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openProducts(user.id);
-                      }}
-                      className="bg-sky-500 hover:bg-sky-600 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all"
-                    >
-                      Produtos Ativos
-                    </button>
+                  <td className="p-6 text-right h-full">
+                    <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openProducts(user.id);
+                        }}
+                        className="px-4 py-2.5 bg-sky-50 text-sky-600 hover:bg-sky-100 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap"
+                      >
+                        Produtos
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectUser(user);
+                        }}
+                        className="p-2.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                        title="Ver Perfil"
+                      >
+                        <Icons.Dashboard />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {!loading && users.length === 0 && (
-          <div className="p-20 text-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-              <Icons.Search />
-            </div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum usuário encontrado</p>
-          </div>
-        )}
       </div>
+
+      {/* Modal for Active Products */}
+      {showProductsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-300 overflow-y-auto">
+          <div className="bg-white rounded-[2.5rem] p-10 w-full max-w-4xl shadow-2xl relative animate-in zoom-in-95 duration-300">
+            <button
+              onClick={() => setShowProductsModal(false)}
+              className="absolute top-6 right-6 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 flex items-center justify-center transition-colors"
+            >✕</button>
+            <div className="mb-10">
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Produtos do Usuário</h3>
+              <p className="text-slate-500 font-medium mt-1">Lista de investimentos ativos e rendimentos.</p>
+            </div>
+
+            {selectedUserProducts.length === 0 ? (
+              <div className="py-20 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+                <p className="text-slate-400 font-black uppercase tracking-widest text-sm">Nenhum produto contratado.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                {selectedUserProducts.map((p) => (
+                  <div key={p.id} className="bg-white border border-slate-100 p-6 rounded-3xl hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 flex items-center justify-between group">
+                    <div className="flex items-center gap-5">
+                      <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl border border-emerald-100">
+                        💰
+                      </div>
+                      <div>
+                        <h4 className="font-black text-slate-900 text-lg leading-tight uppercase tracking-tight">{p.name || 'Investimento'}</h4>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-widest">
+                            {p.duration_days} Dias
+                          </span>
+                          <span className="text-[10px] font-black text-slate-300 uppercase">
+                            Comprado em {new Date(p.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-8">
+                      <div className="text-right">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Renda Diária</p>
+                        <p className="text-xl font-black text-emerald-600">Kz {Number(p.daily_income).toLocaleString('pt-BR')}</p>
+                      </div>
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                        <button
+                          onClick={() => handleEditIncome(p.id)}
+                          className="w-10 h-10 bg-slate-100 hover:bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center transition-all"
+                          title="Editar Renda"
+                        >
+                          <Icons.Edit />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(p.id)}
+                          className="w-10 h-10 bg-slate-100 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-all"
+                          title="Remover"
+                        >
+                          <Icons.Trash />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
-
-  {/* Modal for Active Products */ }
-  {
-    showProductsModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 overflow-y-auto">
-        <div className="bg-white rounded-[2rem] p-8 w-full max-w-3xl shadow-2xl relative">
-          <button
-            onClick={() => setShowProductsModal(false)}
-            className="absolute top-4 right-4 text-slate-500 hover:text-slate-700"
-          >✕</button>
-          <h3 className="text-2xl font-black text-slate-900 mb-6">Produtos Ativos</h3>
-          {selectedUserProducts.length === 0 ? (
-            <p className="text-center text-slate-500">Nenhum produto ativo.</p>
-          ) : (
-            <table className="w-full premium-table">
-              <thead>
-                <tr>
-                  <th className="p-4 text-left">Nome</th>
-                  <th className="p-4 text-left">Renda Diária (Kz)</th>
-                  <th className="p-4 text-left">Duração (dias)</th>
-                  <th className="p-4 text-left">Data da Compra</th>
-                  <th className="p-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedUserProducts.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-200">
-                    <td className="p-4">{p.name}</td>
-                    <td className="p-4">Kz {Number(p.daily_income).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                    <td className="p-4">{p.duration_days}</td>
-                    <td className="p-4">{new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
-                    <td className="p-4 text-right space-x-2">
-                      <button
-                        onClick={() => handleEditIncome(p.id)}
-                        className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-xs"
-                      >Editar Renda</button>
-                      <button
-                        onClick={() => handleDeleteProduct(p.id)}
-                        className="px-3 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-md text-xs"
-                      >
-                        <Icons.Trash />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-    )
-  }
-
 };
 
 export default Users;
