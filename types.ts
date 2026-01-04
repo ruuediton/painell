@@ -66,10 +66,15 @@ export interface Transaction {
 export interface Product {
   id: string;
   name: string;
-  category: string;
+  duration_days: number;
   price: number;
+  daily_income: number;
+  total_income: number;
+  purchase_limit: number;
+  image_url: string | null;
+  emoji: string | null;
+  description: string | null;
   status: ProductStatus;
-  description: string;
   createdAt: string;
 }
 

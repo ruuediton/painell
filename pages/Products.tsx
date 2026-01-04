@@ -262,12 +262,52 @@ const Products: React.FC = () => {
                   placeholder="📦"
                 />
               </div>
+              <div>
+                <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 block">Limite de Compra</label>
+                <input
+                  type="number"
+                  className="w-full p-3 md:p-4 bg-slate-50 border-2 border-slate-100 rounded-lg md:rounded-xl font-bold text-sm md:text-base text-slate-900 outline-none focus:border-sky-500 transition-colors"
+                  value={currentProduct.purchase_limit || ''}
+                  onChange={e => setCurrentProduct({ ...currentProduct, purchase_limit: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 block">Status</label>
+                <select
+                  className="w-full p-3 md:p-4 bg-slate-50 border-2 border-slate-100 rounded-lg md:rounded-xl font-bold text-sm md:text-base text-slate-900 outline-none focus:border-sky-500 transition-colors appearance-none"
+                  value={currentProduct.status || 'active'}
+                  onChange={e => setCurrentProduct({ ...currentProduct, status: e.target.value })}
+                >
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 block">URL da Imagem (Opcional)</label>
+                <div className="flex gap-4 items-center">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      className="w-full p-3 md:p-4 bg-slate-50 border-2 border-slate-100 rounded-lg md:rounded-xl font-bold text-sm md:text-base text-slate-900 outline-none focus:border-sky-500 transition-colors"
+                      value={currentProduct.image_url || ''}
+                      onChange={e => setCurrentProduct({ ...currentProduct, image_url: e.target.value })}
+                      placeholder="https://exemplo.com/imagem.png"
+                    />
+                  </div>
+                  {currentProduct.image_url && (
+                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0 bg-slate-50">
+                      <img src={currentProduct.image_url} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/150')} />
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="md:col-span-2">
                 <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 block">Descrição</label>
                 <textarea
                   className="w-full p-3 md:p-4 bg-slate-50 border-2 border-slate-100 rounded-lg md:rounded-xl font-bold text-sm md:text-base text-slate-900 outline-none focus:border-sky-500 transition-colors min-h-[80px]"
                   value={currentProduct.description || ''}
                   onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })}
+                  placeholder="Descreva os benefícios deste plano..."
                 />
               </div>
             </div>
