@@ -19,6 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEma
     { id: 'suporte', label: 'Suporte', icon: Icons.Users },
     { id: 'settings', label: 'Dados', icon: Icons.Dashboard },
     { id: 'products', label: 'Produtos', icon: Icons.Products },
+    { id: 'metadados', label: 'Metadados', icon: Icons.Database },
   ];
 
   return (

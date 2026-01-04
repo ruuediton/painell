@@ -56,6 +56,9 @@ export const Icons = {
   Save: () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
   ),
+  Database: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c-4.97 0-9 1.79-9 4s4.03 4 9 4 9-1.79 9-4-4.03-4-9-4Z" /><path d="M19 8.95c0 2.21-3.13 4-7 4s-7-1.79-7-4" /><path d="M5 14c0 2.21 3.13 4 7 4s7-1.79 7-4" /><path d="M5 19c0 2.21 3.13 4 7 4s7-1.79 7-4" /><path d="M3 7v12" /><path d="M21 7v12" /></svg>
+  ),
   History: () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg>
   ),
