@@ -1,5 +1,4 @@
-import React from 'react';
-import { Icons } from '../constants';
+import { Icons, NAV_ITEMS } from '../constants';
 import { Page } from '../types';
 
 interface SidebarProps {
@@ -10,18 +9,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEmail, isAdminMaster }) => {
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
-    { id: 'users', label: 'Usuários', icon: Icons.Users },
-    { id: 'deposits', label: 'Depósitos', icon: Icons.Deposits },
-    { id: 'withdrawals', label: 'Saques', icon: Icons.Withdrawals },
-    { id: 'bonus', label: 'Bônus', icon: Icons.Bonus },
-    { id: 'suporte', label: 'Suporte', icon: Icons.Users },
-    { id: 'settings', label: 'Dados', icon: Icons.Dashboard },
-    { id: 'products', label: 'Produtos', icon: Icons.Products },
-    { id: 'metadados', label: 'Metadados', icon: Icons.Database },
-  ];
-
   return (
     <aside className="flex flex-col w-full lg:w-72 bg-slate-900 h-screen sticky top-0 overflow-y-auto border-r border-slate-800">
       <div className="p-8">
@@ -37,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, adminEma
         </div>
 
         <nav className="space-y-1.5">
-          {menuItems.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id || (item.id === 'users' && currentPage === 'user-detail');
 

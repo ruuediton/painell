@@ -63,3 +63,15 @@ export const Icons = {
     <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg>
   ),
 };
+
+export const NAV_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
+  { id: 'users', label: 'Usuários', icon: Icons.Users },
+  { id: 'deposits', label: 'Depósitos', icon: Icons.Deposits },
+  { id: 'withdrawals', label: 'Saques', icon: Icons.Withdrawals },
+  { id: 'bonus', label: 'Bônus', icon: Icons.Bonus },
+  { id: 'suporte', label: 'Suporte', icon: Icons.Users },
+  { id: 'settings', label: 'Dados', icon: Icons.Dashboard },
+  { id: 'products', label: 'Produtos', icon: Icons.Products },
+  { id: 'metadados', label: 'Metadados', icon: Icons.Database },
+];
